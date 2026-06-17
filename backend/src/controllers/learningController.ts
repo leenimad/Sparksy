@@ -3,8 +3,6 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { LearningPath } from '../models/LearningPath';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 // @desc    Generate a new personalized learning roadmap
 // @route   POST /api/learn/generate
 // @access  Private (Needs JWT token)
@@ -20,10 +18,18 @@ export const generateLearningPath = async (
       return;
     }
 
-    
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ 
+        status: 'error', 
+        message: 'API Key is missing on the server. Please check environment configuration.' 
+      });
+      return;
+    }
+    const genAI = new GoogleGenerativeAI(apiKey);
+
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-     
+      model: 'gemini-3.1-flash-lite',
       generationConfig: { responseMimeType: 'application/json' },
     });
 
@@ -46,11 +52,11 @@ export const generateLearningPath = async (
       Do not wrap your response in markdown code blocks like \`\`\`json. Return only the raw JSON.
     `;
 
-    
+    // Generate content using Gemini
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    
+    // Parse the JSON string sent back by Gemini
     let parsedData;
     try {
       parsedData = JSON.parse(responseText);
@@ -62,7 +68,7 @@ export const generateLearningPath = async (
       return;
     }
 
-    // Save the learning path to the database
+    // Save the generated learning path to the database
     const learningPath = await LearningPath.create({
       user: req.user._id,
       topic: parsedData.topic,
