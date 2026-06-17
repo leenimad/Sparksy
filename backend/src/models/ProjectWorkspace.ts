@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 
-const ModuleSchema = new Schema({
+const TaskSchema = new Schema({
   title: {
     type: String,
     required: true,
@@ -13,27 +13,36 @@ const ModuleSchema = new Schema({
     type: String,
     required: true,
   },
+  status: {
+    type: String,
+    enum: ['To Do', 'In Progress', 'Done'],
+    default: 'To Do',
+  },
   resources: [{
     type: String,
   }],
 });
 
-const LearningPathSchema = new Schema(
+const ProjectWorkspaceSchema = new Schema(
   {
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    topic: {
+    projectName: {
       type: String,
       required: true,
     },
-    modules: [ModuleSchema],
+    techStack: {
+      type: String,
+      required: true,
+    },
+    tasks: [TaskSchema], 
   },
   {
     timestamps: true,
   }
 );
 
-export const LearningPath = model('LearningPath', LearningPathSchema);
+export const ProjectWorkspace = model('ProjectWorkspace', ProjectWorkspaceSchema);

@@ -8,7 +8,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import connectDB from './config/db';
 import authRoutes from './routes/authRoutes';
-import learningRoutes from './routes/learningRoutes';
+import learningRoutes from './routes/projectRoutes';
 
 // Connect to MongoDB
 connectDB();
@@ -23,7 +23,7 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/learn', learningRoutes);
+app.use('/api/projects', learningRoutes);
 
 // Base Route
 app.get('/', (req: Request, res: Response) => {
