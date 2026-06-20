@@ -34,27 +34,27 @@ export const generateProjectWorkspace = async (
       generationConfig: { responseMimeType: 'application/json' },
     });
 
-    const prompt = `
-      Act as a Lead Software Architect and Product Manager. You are scoping a development project for: "${idea}".
-      Design a practical technical specification and break it down into exactly 4 or 5 progressive development tasks.
+      const prompt = `
+      Act as a Universal AI Project Scoper, Lead Educator, and Business Strategist. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
+      Identify the required tools, materials, or prerequisites, and break down the project into exactly 4 or 5 progressive actionable tasks.
       
       You must respond strictly with a JSON object conforming exactly to this schema:
       {
-        "projectName": "A catchy, short name for the project",
-        "techStack": "Specify the recommended stack, e.g., Next.js, Node.js, MongoDB, Socket.io",
+        "projectName": "A catchy, short name for the project or learning goal",
+        "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma & UI Design', or 'Espresso Machine & Sourcing', or 'React & Tailwind')",
         "tasks": [
           {
-            "title": "Brief task title (e.g., Setup Database & schemas, Build Login UI, Integrate Stripe)",
-            "description": "Provide a clean, technical description of what needs to be done. Suggest boilerplate libraries or API schemas.",
-            "estimatedTime": "Estimated effort in hours, e.g., 3 hours, 5 hours",
+            "title": "Brief task title",
+            "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
+            "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
             "status": "To Do",
-            "resources": ["Provide 2 actual resource links, official documentation, or GitHub boilerplates relevant to this specific task."]
+            "resources": ["Provide 2 actual resource links, official documentation, tutorials, or guides relevant to this task."]
           }
         ]
       }
       Do not wrap your response in markdown code blocks. Return only the raw JSON string.
     `;
-
+    
     // Generate content using Gemini
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
