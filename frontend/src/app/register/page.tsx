@@ -11,6 +11,7 @@ import Cookies from 'js-cookie';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import ThemeToggle from '@/components/ThemeToggle'; // Import toggle
 
 export default function Register() {
   const router = useRouter();
@@ -41,25 +42,30 @@ export default function Register() {
   };
 
   return (
-    <main className="min-h-screen bg-[#090d16] text-white flex flex-col justify-center items-center p-6 relative">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+    <main className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-white flex flex-col justify-center items-center p-6 relative transition-colors duration-300">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-blue-500/5 dark:bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
 
-      <Link href="/" className="absolute top-8 left-8 flex items-center gap-1.5 text-slate-400 hover:text-white transition-all text-sm font-medium">
+      {/* Floating Theme Toggle in Top Right */}
+      <div className="absolute top-8 right-8 z-25">
+        <ThemeToggle />
+      </div>
+
+      <Link href="/" className="absolute top-8 left-8 flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-sm font-medium">
         <ArrowLeft className="w-4 h-4" />
         Back to Home
       </Link>
 
-      <Card className="w-full max-w-md !p-8 bg-slate-950/60 border-slate-800/80 backdrop-blur-md">
+      <Card className="w-full max-w-md !p-8 bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/80 backdrop-blur-md shadow-xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-2 text-blue-400 mb-2">
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
             <Sparkles className="w-7 h-7" />
-            <span className="text-2xl font-bold tracking-tight text-white">Sparksy</span>
+            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Sparksy</span>
           </div>
-          <h2 className="text-lg font-medium text-slate-300">Create your builder account</h2>
+          <h2 className="text-lg font-medium text-slate-600 dark:text-slate-300">Create your builder account</h2>
         </div>
 
         {error && (
-          <div className="p-3.5 mb-5 text-sm text-red-400 bg-red-950/30 rounded-xl border border-red-900/30">
+          <div className="p-3.5 mb-5 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-900/30">
             {error}
           </div>
         )}
@@ -98,9 +104,9 @@ export default function Register() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-400">
+        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-400 hover:underline font-medium">
+          <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
             Login
           </Link>
         </p>

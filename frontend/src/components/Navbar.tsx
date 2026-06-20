@@ -19,7 +19,7 @@ export default function Navbar({ userName, onLogout }: NavbarProps) {
           <ThemeToggle />
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-sm font-semibold text-blue-600 dark:text-blue-400 font-bold">
+            <div className="w-8 h-8 rounded-full bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-sm font-semibold text-blue-600 dark:text-blue-400">
               {userName.charAt(0).toUpperCase()}
             </div>
             <span className="text-slate-700 dark:text-slate-300 text-sm font-medium">{userName}</span>

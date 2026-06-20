@@ -51,7 +51,7 @@ export default function ProjectCard({ project, onDelete, onOpen }: ProjectCardPr
 
         <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 text-xs font-semibold px-2.5 py-1.5 rounded-lg w-fit mb-8 border border-slate-200 dark:border-slate-800/50">
           <Code className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span className="truncate max-w-[200px]">{project.techStack}</span>
+          <span className="truncate max-w-50">{project.techStack}</span>
         </div>
       </div>
 

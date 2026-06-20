@@ -12,7 +12,7 @@ interface ScoperInputProps {
 
 export default function ScoperInput({ idea, setIdea, onGenerate, generating }: ScoperInputProps) {
   return (
-    <Card className="!p-8 mb-12 relative max-w-3xl mx-auto overflow-hidden">
+    <Card className="p-8! mb-12 relative max-w-3xl mx-auto overflow-hidden">
       <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
       
       <div className="flex items-center gap-2 mb-2 text-blue-600 dark:text-blue-400">
