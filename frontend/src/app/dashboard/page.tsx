@@ -11,6 +11,7 @@ import Navbar from '@/components/Navbar';
 import ScoperInput from '@/components/ScoperInput';
 import ProjectCard from '@/components/ProjectCard';
 import Card from '@/components/ui/Card';
+import Dialog from '@/components/ui/Dialog';
 
 interface Task {
   _id: string;
@@ -18,11 +19,13 @@ interface Task {
   description: string;
   estimatedTime: string;
   status: 'To Do' | 'In Progress' | 'Done';
+  resources: string[];
 }
 
 interface Project {
   _id: string;
   projectName: string;
+  description: string;
   techStack: string;
   tasks: Task[];
   createdAt: string;
@@ -35,6 +38,22 @@ export default function Dashboard() {
   const [idea, setIdea] = useState('');
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // 1. Project deletion tracking state
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+
+  // Reusable Dialog State
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    type: 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+  });
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -76,24 +95,46 @@ export default function Dashboard() {
         setIdea('');
       }
     } catch (err) {
-      alert('Error generating project. Please try again.');
+      setDialog({
+        isOpen: true,
+        type: 'error',
+        title: 'Architecting Failed',
+        message: 'Sparksy was unable to scope your project. Please verify your connection or API keys and try again.',
+      });
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, projectId: string) => {
+  // 2. Trigger Custom Warning Dialog instead of native confirm()
+  const handleDeleteClick = (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this project workspace?')) return;
+    setProjectToDelete(projectId); // Save target project in state
+    setDialog({
+      isOpen: true,
+      type: 'warning',
+      title: 'Delete Workspace',
+      message: 'Are you sure you want to permanently delete this project workspace? This action is irreversible and all progress will be lost.',
+    });
+  };
+
+  // 3. The actual API execution on confirm click
+  const executeDelete = async () => {
+    if (!projectToDelete) return;
 
     try {
-      const response = await api.delete(`/projects/${projectId}`);
+      const response = await api.delete(`/projects/${projectToDelete}`);
       if (response.data.status === 'success') {
-        setProjects((prev) => prev.filter((p) => p._id !== projectId));
+        setProjects((prev) => prev.filter((p) => p._id !== projectToDelete));
       }
     } catch (err) {
-      alert('Failed to delete project.');
-    }
+     setDialog({
+        isOpen: true,
+        type: 'error',
+        title: 'Deletion Failed',
+        message: 'Sparksy was unable to delete this project workspace. Please try again.',
+      });
+    } 
   };
 
   const handleLogout = () => {
@@ -106,11 +147,11 @@ export default function Dashboard() {
     <main className="min-h-screen bg-stone-50 dark:bg-[#0c0a09] text-stone-900 dark:text-white pb-16 relative transition-colors duration-300">
       <div className="absolute top-0 right-1/4 w-[400px] h-[200px] bg-amber-500/5 blur-[100px] rounded-full pointer-events-none"></div>
 
-      {/* 1. Navbar Component */}
+      {/* Navbar Component */}
       <Navbar userName={userName} onLogout={handleLogout} />
 
       <div className="max-w-6xl mx-auto px-8 mt-12">
-        {/* 2. Scoper Input Component */}
+        {/* Scoper Input Component */}
         <ScoperInput 
           idea={idea} 
           setIdea={setIdea} 
@@ -130,27 +171,44 @@ export default function Dashboard() {
           </div>
         ) : projects.length === 0 ? (
           <div className="text-center py-20 max-w-lg mx-auto">
-            {/* Unified empty-state Card styled with warm stone/charcoal configurations */}
-          <Card className="text-center py-20 bg-white/20 dark:bg-stone-950/20 border-dashed border-stone-200 dark:border-stone-800/80 p-8 max-w-lg mx-auto">
-            <Sparkles className="w-10 h-10 text-amber-500 dark:text-amber-600 mx-auto mb-4" />
-            <p className="text-stone-700 dark:text-stone-400 font-medium mb-1">No active workspace boards found</p>
-            <p className="text-stone-400 dark:text-stone-600 text-xs">Enter your project concept in the incubator above to get started.</p>
-          </Card>
+            <Card className="text-center py-20 bg-white/20 dark:bg-stone-950/20 border-dashed border-stone-200 dark:border-stone-800/80 p-8 max-w-lg mx-auto">
+              <Sparkles className="w-10 h-10 text-amber-500 dark:text-amber-600 mx-auto mb-4" />
+              <p className="text-stone-700 dark:text-stone-400 font-medium mb-1">No active workspace boards found</p>
+              <p className="text-stone-400 dark:text-stone-600 text-xs">Enter your project concept in the incubator above to get started.</p>
+            </Card>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 3. Render list of Project Cards */}
+            {/* Render list of Project Cards */}
             {projects.map((project) => (
               <ProjectCard 
                 key={project._id}
                 project={project} 
-                onDelete={handleDelete}
+                onDelete={handleDeleteClick} // Pass the click trigger
                 onOpen={() => router.push(`/dashboard/project/${project._id}`)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* 4. Mount Reusable Dialog (Supports Confirm / Cancel triggers!) */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        onClose={() => {
+          setDialog((prev) => ({ ...prev, isOpen: false }));
+          setProjectToDelete(null); // Clear state on cancel
+        }}
+        type={dialog.type}
+        title={dialog.title}
+        message={dialog.message}
+        // Conditionally pass onConfirm only when deleting!
+        onConfirm={projectToDelete ? executeDelete : undefined}
+      />
     </main>
   );
+}
+
+function setDraggedTaskId(arg0: null) {
+  throw new Error('Function not implemented.');
 }

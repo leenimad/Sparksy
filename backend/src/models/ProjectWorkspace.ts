@@ -34,6 +34,10 @@ const ProjectWorkspaceSchema = new Schema(
       type: String,
       required: true,
     },
+     description: {
+      type: String,
+      required: true,
+    },
     techStack: {
       type: String,
       required: true,

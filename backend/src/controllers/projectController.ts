@@ -34,27 +34,51 @@ export const generateProjectWorkspace = async (
       generationConfig: { responseMimeType: 'application/json' },
     });
 
-      const prompt = `
-      Act as a Universal AI Project Scoper, Lead Educator, and Business Strategist. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
-      Identify the required tools, materials, or prerequisites, and break down the project into exactly 4 or 5 progressive actionable tasks.
+    //   const prompt = `
+    //   Act as a Universal AI Project Scoper, Lead Educator, and Business Strategist. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
+    //   Identify the required tools, materials, or prerequisites, and break down the project into exactly 6 or 7 progressive actionable tasks.
+      
+    //   You must respond strictly with a JSON object conforming exactly to this schema:
+    //   {
+    //     "projectName": "A catchy, short name for the project or learning goal",
+    //     "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma & UI Design', or 'Espresso Machine & Sourcing', or 'React & Tailwind')",
+    //     "tasks": [
+    //       {
+    //         "title": "Brief task title",
+    //         "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
+    //         "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
+    //         "status": "To Do",
+    //         "resources": ["Provide 2 actual resource links, official documentation, tutorials, or guides relevant to this task."]
+    //       }
+    //     ]
+    //   }
+    //   Do not wrap your response in markdown code blocks. Return only the raw JSON string.
+    // `;
+  const prompt = `
+      Act as an AI Product Strategist, Lead Educator, and Business Consultant. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
+      Identify the required tools/materials separated by commas without 'and' word, write a motivating strategic overview, and break the project down into exactly 6 or 7 progressive tasks.
       
       You must respond strictly with a JSON object conforming exactly to this schema:
       {
         "projectName": "A catchy, short name for the project or learning goal",
-        "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma & UI Design', or 'Espresso Machine & Sourcing', or 'React & Tailwind')",
+        "description": "A high-level, motivating strategic overview of the project. Explain the core concept, key strategies for success, and how this roadmap helps them achieve their goal.",
+        "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma , UI Design', or 'Espresso Machine , Sourcing')",
         "tasks": [
           {
             "title": "Brief task title",
             "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
             "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
             "status": "To Do",
-            "resources": ["Provide 2 actual resource links, official documentation, tutorials, or guides relevant to this task."]
+            "resources": ["Provide 2 to 3 actual resource links, official documentation, tutorials, or guides relevant to this task."]
           }
         ]
       }
       Do not wrap your response in markdown code blocks. Return only the raw JSON string.
     `;
+
     
+    // Save the parsed workspace to MongoDB (include description!)
+
     // Generate content using Gemini
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
@@ -75,8 +99,9 @@ export const generateProjectWorkspace = async (
     const workspace = await ProjectWorkspace.create({
       user: req.user._id,
       projectName: parsedData.projectName,
+      description: parsedData.description, // Added description
       techStack: parsedData.techStack,
-      tasks: parsedData.tasks, // Updated field
+      tasks: parsedData.tasks,
     });
 
     res.status(201).json({
@@ -145,9 +170,9 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
-    // Normalize route parameter type and find the subdocument task
-    const taskId = Array.isArray(req.params.taskId) ? req.params.taskId[0] : req.params.taskId;
-    const task = project.tasks.id(taskId);
+    // Robust JavaScript find (works flawlessly across all Mongoose & TS configurations!)
+    const task = project.tasks.find((t: any) => t._id && t._id.toString() === req.params.taskId);
+    
     if (!task) {
       res.status(404).json({ status: 'fail', message: 'Task not found in this workspace' });
       return;
