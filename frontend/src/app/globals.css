@@ -1,6 +1,10 @@
-@import "tailwindcss";
+/* @import "tailwindcss";
 
 body {
   background-color: #f8fafc;
   color: #0f172a;
-}
+} */
+ @import "tailwindcss";
+
+/* Tell Tailwind v4 to use class-based selector instead of OS system theme */
+@variant dark (&:where(.dark, .dark *));
