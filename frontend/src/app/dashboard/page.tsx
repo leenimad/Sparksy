@@ -6,11 +6,11 @@ import { Loader2, Code } from 'lucide-react';
 import api from '@/lib/api';
 import Cookies from 'js-cookie';
 
-// Import our new isolated components and UI primitives
+// Import our modular components and UI primitives
 import Navbar from '@/components/Navbar';
 import ScoperInput from '@/components/ScoperInput';
 import ProjectCard from '@/components/ProjectCard';
-import Card from '@/components/ui/Card'; // Import our new Card primitive!
+import Card from '@/components/ui/Card';
 
 interface Task {
   _id: string;
@@ -103,8 +103,8 @@ export default function Dashboard() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-white pb-16 relative transition-colors duration-300">
-      <div className="absolute top-0 right-1/4 w-[400px] h-[200px] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+    <main className="min-h-screen bg-stone-50 dark:bg-[#0c0a09] text-stone-900 dark:text-white pb-16 relative transition-colors duration-300">
+      <div className="absolute top-0 right-1/4 w-[400px] h-[200px] bg-amber-500/5 blur-[100px] rounded-full pointer-events-none"></div>
 
       {/* 1. Navbar Component */}
       <Navbar userName={userName} onLogout={handleLogout} />
@@ -120,24 +120,26 @@ export default function Dashboard() {
 
         {/* Project Workspaces Grid Header */}
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-base font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Active Workspaces</h3>
-          <span className="text-xs text-slate-500 font-medium">{projects.length} Total Projects</span>
+          <h3 className="text-base font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">Active Workspaces</h3>
+          <span className="text-xs text-stone-500 font-medium">{projects.length} Total Projects</span>
         </div>
 
         {loading ? (
           <div className="flex justify-center items-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
           </div>
         ) : projects.length === 0 ? (
-          /* 3. Refactored empty state to use our unified custom Card component! */
-          <Card className="text-center py-20 bg-white/20 dark:bg-slate-950/20 border-dashed border-slate-200 dark:border-slate-800/80 p-8 max-w-lg mx-auto">
-            <Code className="w-10 h-10 text-slate-400 dark:text-slate-700 mx-auto mb-4" />
-            <p className="text-slate-700 dark:text-slate-400 font-medium mb-1">No active workspace boards found</p>
-            <p className="text-slate-400 dark:text-slate-600 text-xs">Enter your project concept in the scoper input above to get started.</p>
-          </Card>
+          <div className="text-center py-20 max-w-lg mx-auto">
+            {/* Unified empty-state Card styled with warm stone/charcoal configurations */}
+            <Card className="border-dashed border-stone-200 dark:border-stone-800/80 p-8">
+              <Code className="w-10 h-10 text-stone-400 dark:text-stone-700 mx-auto mb-4" />
+              <p className="text-stone-700 dark:text-stone-400 font-medium mb-1">No active workspace boards found</p>
+              <p className="text-stone-400 dark:text-stone-600 text-xs">Enter your project concept in the scoper input above to get started.</p>
+            </Card>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 4. Render list of Project Cards */}
+            {/* 3. Render list of Project Cards */}
             {projects.map((project) => (
               <ProjectCard 
                 key={project._id}

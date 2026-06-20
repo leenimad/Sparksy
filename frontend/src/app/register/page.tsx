@@ -7,11 +7,11 @@ import { Sparkles, ArrowLeft } from 'lucide-react';
 import api from '@/lib/api';
 import Cookies from 'js-cookie';
 
-// Import UI Primitives
+// Import UI Primitives and Toggle
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-import ThemeToggle from '@/components/ThemeToggle'; // Import toggle
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Register() {
   const router = useRouter();
@@ -42,26 +42,26 @@ export default function Register() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-white flex flex-col justify-center items-center p-6 relative transition-colors duration-300">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-blue-500/5 dark:bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+    <main className="min-h-screen bg-stone-50 dark:bg-[#0c0a09] text-stone-900 dark:text-white flex flex-col justify-center items-center p-6 relative transition-colors duration-300">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-amber-500/5 dark:bg-amber-500/10 blur-[100px] rounded-full pointer-events-none"></div>
 
       {/* Floating Theme Toggle in Top Right */}
       <div className="absolute top-8 right-8 z-25">
         <ThemeToggle />
       </div>
 
-      <Link href="/" className="absolute top-8 left-8 flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-sm font-medium">
+      <Link href="/" className="absolute top-8 left-8 flex items-center gap-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white transition-all text-sm font-medium">
         <ArrowLeft className="w-4 h-4" />
         Back to Home
       </Link>
 
-      <Card className="w-full max-w-md !p-8 bg-white dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/80 backdrop-blur-md shadow-xl">
+      <Card className="w-full max-w-md !p-8 bg-white dark:bg-stone-950/60 border-stone-200 dark:border-stone-800/80 backdrop-blur-md shadow-xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
             <Sparkles className="w-7 h-7" />
-            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Sparksy</span>
+            <span className="text-2xl font-bold tracking-tight text-stone-900 dark:text-white">Sparksy</span>
           </div>
-          <h2 className="text-lg font-medium text-slate-600 dark:text-slate-300">Create your builder account</h2>
+          <h2 className="text-lg font-medium text-stone-600 dark:text-stone-300">Create your builder account</h2>
         </div>
 
         {error && (
@@ -104,9 +104,9 @@ export default function Register() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-stone-500 dark:text-stone-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+          <Link href="/login" className="text-amber-600 dark:text-amber-400 hover:underline font-medium">
             Login
           </Link>
         </p>
