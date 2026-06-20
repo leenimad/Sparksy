@@ -471,23 +471,89 @@ export default function ProjectBoard() {
     setDraggedTaskId(null);
   };
 
-  const handleDrop = async (taskId: string, targetStatus: 'To Do' | 'In Progress' | 'Done') => {
-    if (!project) return;
-    const taskToMove = project.tasks.find((t) => t._id === taskId);
-    if (!taskToMove || taskToMove.status === targetStatus) return;
+  // const handleDrop = async (taskId: string, targetStatus: 'To Do' | 'In Progress' | 'Done') => {
+  //   if (!project) return;
+  //   const taskToMove = project.tasks.find((t) => t._id === taskId);
+  //   if (!taskToMove || taskToMove.status === targetStatus) return;
 
-    // --- AGILE PROGRESSION RULES (PREVENTS ACCIDENTAL DRAGS) ---
-    if (taskToMove.status === 'To Do' && targetStatus === 'Done') {
-      setDialog({
-        isOpen: true,
-        type: 'warning',
-        title: 'Agile Flow Restriction',
-        message: 'Tasks must go through "In Progress" before being marked as "Done".',
-      });
-      return;
+  //   // --- AGILE PROGRESSION RULES (PREVENTS ACCIDENTAL DRAGS) ---
+  //   if (taskToMove.status === 'To Do' && targetStatus === 'Done') {
+  //     setDialog({
+  //       isOpen: true,
+  //       type: 'warning',
+  //       title: 'Agile Flow Restriction',
+  //       message: 'Tasks must go through "In Progress" before being marked as "Done".',
+  //     });
+  //     return;
+  //   }
+
+  //   // --- OPTIMISTIC UI UPDATE ---
+  //   const originalTasks = [...project.tasks];
+  //   const updatedTasks = project.tasks.map((t) => 
+  //     t._id === taskId ? { ...t, status: targetStatus } : t
+  //   );
+  //   setProject({ ...project, tasks: updatedTasks });
+
+  //   try {
+  //     await api.patch(`/projects/${projectId}/tasks/${taskId}`, { status: targetStatus });
+  //     setToast({
+  //       isOpen: true,
+  //       message: `Milestone completed! You successfully finished "${taskToMove.title}".`,
+  //     });
+  //   } catch (err) {
+  //     console.error('Failed to update status on server', err);
+  //     setProject({ ...project, tasks: originalTasks }); // Rollback
+  //     setDialog({
+  //       isOpen: true,
+  //       type: 'error',
+  //       title: 'Connection Error',
+  //       message: 'Failed to sync task status with the server. Please check your connection.',
+  //     });
+  //   }
+  // };
+ const handleUpdateStatus = async (taskId: string, targetStatus: 'To Do' | 'In Progress' | 'Done') => {
+    if (!project) return;
+    
+    // Find index of the card we are moving
+    const taskIndex = project.tasks.findIndex((t) => t._id === taskId);
+    if (taskIndex === -1) return;
+
+    const taskToMove = project.tasks[taskIndex];
+    if (taskToMove.status === targetStatus) return;
+
+    // --- 1. FORWARD PROGRESSION VALIDATION (RESTORED!) ---
+    // You cannot start or complete a task unless all previous tasks in the list are marked as Done
+    if (targetStatus === 'In Progress' || targetStatus === 'Done') {
+      for (let i = 0; i < taskIndex; i++) {
+        if (project.tasks[i].status !== 'Done') {
+          setDialog({
+            isOpen: true,
+            type: 'warning',
+            title: 'Progression Blocked',
+            message: `Sparksy requires you to complete Step ${i + 1}: "${project.tasks[i].title}" before you can start or complete this step.`,
+          });
+          return;
+        }
+      }
     }
 
-    // --- OPTIMISTIC UI UPDATE ---
+    // --- 2. BACKWARD RETRACTION VALIDATION (RESTORED!) ---
+    // You cannot move a task backward if subsequent tasks are already active
+    if (targetStatus === 'To Do' || targetStatus === 'In Progress') {
+      for (let i = taskIndex + 1; i < project.tasks.length; i++) {
+        if (project.tasks[i].status === 'In Progress' || project.tasks[i].status === 'Done') {
+          setDialog({
+            isOpen: true,
+            type: 'warning',
+            title: 'Retraction Blocked',
+            message: `You cannot move this step backward because you have already started or completed Step ${i + 1}: "${project.tasks[i].title}". Please move subsequent steps back first.`,
+          });
+          return;
+        }
+      }
+    }
+
+    // --- 3. OPTIMISTIC UI UPDATE ---
     const originalTasks = [...project.tasks];
     const updatedTasks = project.tasks.map((t) => 
       t._id === taskId ? { ...t, status: targetStatus } : t
@@ -496,10 +562,24 @@ export default function ProjectBoard() {
 
     try {
       await api.patch(`/projects/${projectId}/tasks/${taskId}`, { status: targetStatus });
-      setToast({
-        isOpen: true,
-        message: `Milestone completed! You successfully finished "${taskToMove.title}".`,
-      });
+      
+      // --- 4. DYNAMIC CONDITIONAL TOASTS ---
+      if (targetStatus === 'Done') {
+        setToast({
+          isOpen: true,
+          message: `Milestone completed! You successfully finished "${taskToMove.title}".`,
+        });
+      } else if (targetStatus === 'In Progress') {
+        setToast({
+          isOpen: true,
+          message: `Task started! You are now working on "${taskToMove.title}".`,
+        });
+      } else {
+        setToast({
+          isOpen: true,
+          message: `Task reopened: "${taskToMove.title}" has been moved back.`,
+        });
+      }
     } catch (err) {
       console.error('Failed to update status on server', err);
       setProject({ ...project, tasks: originalTasks }); // Rollback
@@ -511,7 +591,6 @@ export default function ProjectBoard() {
       });
     }
   };
-
   const handleLogout = () => {
     Cookies.remove('token');
     localStorage.removeItem('user');
@@ -594,11 +673,11 @@ export default function ProjectBoard() {
           <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
             
             {/* Row 1: Two Column Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-[4fr_3fr] gap-6">
               
-              {/* Column 1: AI Strategic Overview (66% Width) */}
-              <Card className="md:col-span-2 !p-8 relative overflow-hidden flex flex-col justify-between">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-500 to-orange-500"></div>
+             
+              <Card className=" p-8! relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-brom-amber-500 to-orange-500"></div>
                 <div>
                   <h2 className="text-lg font-bold text-stone-800 dark:text-stone-200 mb-3 flex items-center gap-2">
                     <ClipboardList className="w-5 h-5 text-amber-500" />
@@ -610,8 +689,8 @@ export default function ProjectBoard() {
                 </div>
               </Card>
 
-              {/* Column 2: Modern Prerequisite Toolkit Card (33% Width) */}
-              <Card className="!p-8 flex flex-col justify-between">
+
+              <Card className="p-8! flex flex-col justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-stone-800 dark:text-stone-200 mb-4 flex items-center gap-2 ">
                     <Wrench className="w-5 h-5 text-amber-500" />
@@ -623,7 +702,7 @@ export default function ProjectBoard() {
                     {project.techStack.split(',').map((tool, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center min-h-[56px] gap-1.5 px-3.5 py-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 text-xs font-semibold rounded-xl hover:-translate-y-0.5 hover:border-amber-500/30 transition-all duration-200 cursor-default"
+                        className="flex items-center min-h-14 gap-1.5 px-3.5 py-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 text-xs font-semibold rounded-xl hover:-translate-y-0.5 hover:border-amber-500/30 transition-all duration-200 cursor-default"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse-subtle"></span>
                         {tool.trim()}
@@ -648,12 +727,12 @@ export default function ProjectBoard() {
                     <Card 
                       key={task._id}
                       onClick={() => setSelectedTask(task)}
-                      className={`!p-5 hover:border-amber-500/50 cursor-pointer flex items-center justify-between gap-4 transition-all ${
+                      className={`p-5! hover:border-amber-500/50 cursor-pointer flex items-center justify-between gap-4 transition-all ${
                         isDone ? 'bg-stone-50/50 dark:bg-stone-900/10 border-stone-200/50 dark:border-stone-800/40 opacity-70' : ''
                       }`}
                     >
                       <div className="flex items-start gap-4">
-                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5 transition-all ${
+                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 transition-all ${
                           isDone 
                             ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500'
                             : isInProgress
@@ -693,7 +772,7 @@ export default function ProjectBoard() {
                 draggedTaskId={draggedTaskId}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                onDrop={handleDrop}
+                onDrop={handleUpdateStatus}
                 onCardClick={setSelectedTask}
               />
             ))}
@@ -701,8 +780,7 @@ export default function ProjectBoard() {
         )}
       </div>
 
-      {/* Reusable Dialog Primitive (Error/Warning/Info Notifications) */}
-      <Dialog
+       <Dialog
         isOpen={dialog.isOpen}
         onClose={closeDialog}
         type={dialog.type}
@@ -717,8 +795,12 @@ export default function ProjectBoard() {
         onClose={() => setToast((prev) => ({ ...prev, isOpen: false }))}
       />
 
-      {/* Task Details Modal */}
-      <TaskDetailModal task={selectedTask} onClose={() => setSelectedTask(null)} />
+      {/* 3. Task Details Modal (Passing manual status handlers!) */}
+      <TaskDetailModal 
+        task={selectedTask} 
+        onClose={() => setSelectedTask(null)} 
+        onUpdateStatus={handleUpdateStatus} // Connect status update buttons securely!
+      />
     </main>
   );
 }
