@@ -68,10 +68,10 @@ export default function ProjectCard({ project, onDelete, onOpen }: ProjectCardPr
           ></div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 font-semibold group-hover:translate-x-1 transition-all">
-          <span>Open Scrum Workspace</span>
-          <ChevronRight className="w-4 h-4" />
-        </div>
+<div className="flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 font-semibold group-hover:translate-x-1 transition-all">
+  <span>Open Project Workspace</span>
+  <ChevronRight className="w-4 h-4" />
+</div>
       </div>
     </Card>
   );

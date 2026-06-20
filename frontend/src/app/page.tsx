@@ -45,15 +45,17 @@ export default function Home() {
             Introducing Sparksy Workspace
           </div>
 
+  
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-stone-900 dark:bg-gradient-to-b dark:from-white dark:via-stone-100 dark:to-stone-500 dark:bg-clip-text dark:text-transparent">
-            Turn Abstract App Ideas <br />
+            Turn Sparks of Inspiration <br />
             <span className="bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
-              Into Clean Code & Kanban
+              Into Actionable Workspaces
             </span>
           </h1>
 
+          {/* Clean, Universal Description */}
           <p className="mt-6 text-lg text-stone-600 dark:text-stone-400 leading-relaxed">
-            Specify your project concept. Sparksy’s AI automatically generates recommended tech stacks, database schemas, and structured, copy-pasteable development cards ready for execution.
+            Describe any creative, educational, or business idea. Sparksy’s AI instantly maps out required toolkits, essential materials, and progressive task cards to bring your vision to life.
           </p>
 
           <div className="mt-10 flex flex-col justify-center items-center gap-3">
@@ -71,35 +73,36 @@ export default function Home() {
           </div>
         </div>
 
+       
         {/* Core Value Props Grid */}
         <section className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-6 rounded-2xl bg-white dark:bg-stone-950/40 border border-stone-200 dark:border-stone-800/60 backdrop-blur-sm hover:border-amber-300 dark:hover:border-amber-700/60 transition-all group shadow-sm">
             <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-600 dark:text-amber-400 w-fit mb-4">
               <Code className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-lg mb-2 text-stone-800 dark:text-stone-200">AI Architect</h3>
+            <h3 className="font-bold text-lg mb-2 text-stone-800 dark:text-stone-200">AI Project Architect</h3>
             <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed">
-              Instantly plans out schemas, recommended stack specifications, and essential REST APIs for any custom app idea.
+              Instantly plans out required toolkits, essential materials, and structural milestones for any custom idea.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-white dark:bg-stone-950/40 border border-stone-200 dark:border-stone-800/60 backdrop-blur-sm hover:border-amber-300 dark:hover:border-amber-700/60 transition-all group shadow-sm">
-            <div className="p-3 bg-orange-500/10 rounded-xl border border-orange-500/20 text-orange-600 dark:text-orange-400 w-fit mb-4">
+            <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 w-fit mb-4">
               <Kanban className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-lg mb-2 text-stone-800 dark:text-stone-200">Interactive Kanban</h3>
             <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed">
-              Converts complex plans into drag-and-drop tasks, letting you track and organize your dev milestones in real-time.
+              Converts complex plans into drag-and-drop tasks, letting you track and organize your milestones in real-time.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-white dark:bg-stone-950/40 border border-stone-200 dark:border-stone-800/60 backdrop-blur-sm hover:border-amber-300 dark:hover:border-amber-700/60 transition-all group shadow-sm">
-            <div className="p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-yellow-600 dark:text-yellow-500 w-fit mb-4">
-              <Code className="w-6 h-6" />
+            <div className="p-3 bg-violet-500/10 rounded-xl border border-violet-500/20 text-violet-600 dark:text-violet-500 w-fit mb-4">
+              <Sparkles className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-lg mb-2 text-stone-800 dark:text-stone-200">Monetization Ready</h3>
+            <h3 className="font-bold text-lg mb-2 text-stone-800 dark:text-stone-200">Ready to Launch</h3>
             <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed">
-              Generate templates, build custom boilerplate guides, and export your blueprints cleanly as structural assets.
+              Generate plans, build custom checklists, and export your structural milestones as structured assets.
             </p>
           </div>
         </section>

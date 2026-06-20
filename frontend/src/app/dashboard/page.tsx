@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Code } from 'lucide-react';
+import { Loader2, Code, Sparkles } from 'lucide-react';
 import api from '@/lib/api';
 import Cookies from 'js-cookie';
 
@@ -131,11 +131,11 @@ export default function Dashboard() {
         ) : projects.length === 0 ? (
           <div className="text-center py-20 max-w-lg mx-auto">
             {/* Unified empty-state Card styled with warm stone/charcoal configurations */}
-            <Card className="border-dashed border-stone-200 dark:border-stone-800/80 p-8">
-              <Code className="w-10 h-10 text-stone-400 dark:text-stone-700 mx-auto mb-4" />
-              <p className="text-stone-700 dark:text-stone-400 font-medium mb-1">No active workspace boards found</p>
-              <p className="text-stone-400 dark:text-stone-600 text-xs">Enter your project concept in the scoper input above to get started.</p>
-            </Card>
+          <Card className="text-center py-20 bg-white/20 dark:bg-stone-950/20 border-dashed border-stone-200 dark:border-stone-800/80 p-8 max-w-lg mx-auto">
+            <Sparkles className="w-10 h-10 text-amber-500 dark:text-amber-600 mx-auto mb-4" />
+            <p className="text-stone-700 dark:text-stone-400 font-medium mb-1">No active workspace boards found</p>
+            <p className="text-stone-400 dark:text-stone-600 text-xs">Enter your project concept in the incubator above to get started.</p>
+          </Card>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
