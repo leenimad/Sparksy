@@ -9,6 +9,8 @@ import morgan from 'morgan';
 import connectDB from './config/db';
 import authRoutes from './routes/authRoutes';
 import learningRoutes from './routes/projectRoutes';
+import projectRoutes from './routes/projectRoutes';
+import { errorHandler } from './middleware/errorMiddleware';  
 
 // Connect to MongoDB
 connectDB();
@@ -24,7 +26,7 @@ app.use(morgan('dev'));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', learningRoutes);
-
+app.use(errorHandler);
 // Base Route
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({

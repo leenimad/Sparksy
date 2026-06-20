@@ -7,16 +7,17 @@ import {
   deleteProject,
 } from '../controllers/projectController';
 import { protect } from '../middleware/authMiddleware';
+import { validate } from '../middleware/validateMiddleware';
+import { projectSchema } from '../validations/projectValidation';
 
 const router = Router();
 
-// All routes here are protected and require a valid JWT token
 router.use(protect);
 
-router.post('/generate', generateProjectWorkspace); // Create
-router.get('/', getUserProjects);                   // Read All
-router.get('/:id', getProjectById);                 // Read One
-router.patch('/:id/tasks/:taskId', updateTaskStatus); // Update Task Status
-router.delete('/:id', deleteProject);               // Delete Project
+router.post('/generate', validate(projectSchema), generateProjectWorkspace);
+router.get('/', getUserProjects);
+router.get('/:id', getProjectById);
+router.patch('/:id/tasks/:taskId', updateTaskStatus);
+router.delete('/:id', deleteProject);
 
 export default router;
