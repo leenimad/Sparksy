@@ -22,6 +22,11 @@ const UserSchema = new Schema(
       minlength: 6,
       select: false, 
     },
+     role: {
+      type: String,
+      enum: ['builder', 'admin'],
+      default: 'builder',
+    },
   },
   {
     timestamps: true, 
