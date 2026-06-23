@@ -2,116 +2,207 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ProjectWorkspace } from '../models/ProjectWorkspace';
-
+import {asyncHandler} from '../middleware/asyncHandler';
 // @desc    Generate a new technical project workspace with an active task list
 // @route   POST /api/projects/generate
 // @access  Private (Needs JWT token)
-export const generateProjectWorkspace = async (
+//////////////////////////////////////////////////
+// export const generateProjectWorkspace = async (
+//   req: AuthRequest,
+//   res: Response
+// ): Promise<void> => {
+//   try {
+//     const { idea } = req.body;
+
+//     if (!idea) {
+//       res.status(400).json({ status: 'fail', message: 'Please provide a project idea' });
+//       return;
+//     }
+
+//     const apiKey = process.env.GEMINI_API_KEY;
+//     if (!apiKey) {
+//       res.status(500).json({ 
+//         status: 'error', 
+//         message: 'API Key is missing on the server. Please check environment configuration.' 
+//       });
+//       return;
+//     }
+
+//     const genAI = new GoogleGenerativeAI(apiKey);
+
+//     const model = genAI.getGenerativeModel({
+//       model: 'gemini-3.1-flash-lite', 
+//       generationConfig: { responseMimeType: 'application/json' },
+//     });
+
+//   const prompt = `
+//       Act as an AI Project Scoper, AI Product Strategist, Lead Educator, and Business Consultant. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
+//       Identify the required tools/materials separated by commas without 'and' word, write a motivating strategic overview, and break the project down into exactly 5 or 6 progressive tasks.
+//         Each task must contain exactly 3 concrete, step-by-step actionable sub-tasks (checklists).
+      
+//       You must respond strictly with a JSON object conforming exactly to this schema:
+//       {
+//         "projectName": "A catchy, short name for the project or learning goal",
+//         "description": "A high-level, motivating strategic overview of the project. Explain the core concept, key strategies for success, and how this roadmap helps them achieve their goal.",
+//         "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma , UI Design', or 'Espresso Machine , Sourcing')",
+
+//         "tasks": [
+//         {
+//           "title": "Brief task title",
+//           "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
+//           "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
+//           "status": "To Do",
+//           "resources": ["Provide 2 actual resource links, official documentation, tutorials, or guides relevant to this task."],
+//           "subtasks": [
+//             { "title": "First concrete sub-task action item", "isCompleted": false },
+//             { "title": "Second concrete sub-task action item", "isCompleted": false },
+//             { "title": "Third concrete sub-task action item", "isCompleted": false }
+//           ]
+//         }
+//       ]
+//     }
+//     Do not wrap your response in markdown code blocks. Return only the raw JSON string.
+//   `;
+
+//     // Generate content using Gemini
+//     const result = await model.generateContent(prompt);
+//     const responseText = result.response.text();
+
+//     // Parse the JSON string sent back by Gemini
+//     let parsedData;
+//     try {
+//       parsedData = JSON.parse(responseText);
+//     } catch (error) {
+//       res.status(500).json({
+//         status: 'error',
+//         message: 'Failed to process AI architect output. Please try again.',
+//       });
+//       return;
+//     }
+
+//     // Save the parsed workspace to MongoDB under the user's ID
+//     const workspace = await ProjectWorkspace.create({
+//       user: req.user._id,
+//       projectName: parsedData.projectName,
+//       description: parsedData.description,
+//       techStack: parsedData.techStack,
+//       tasks: parsedData.tasks,
+//     });
+
+//     res.status(201).json({
+//       status: 'success',
+//       data: workspace,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ status: 'error', message: (error as Error).message });
+//   }
+// };
+////////////////////////////////////////////
+// @desc    Generate a new technical project workspace with an active task list
+// @route   POST /api/projects/generate
+// @access  Private (Needs JWT token)
+export const generateProjectWorkspace = asyncHandler(async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
-  try {
-    const { idea } = req.body;
+  const { idea } = req.body;
 
-    if (!idea) {
-      res.status(400).json({ status: 'fail', message: 'Please provide a project idea' });
-      return;
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      res.status(500).json({ 
-        status: 'error', 
-        message: 'API Key is missing on the server. Please check environment configuration.' 
-      });
-      return;
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3.1-flash-lite', 
-      generationConfig: { responseMimeType: 'application/json' },
-    });
-
-    //   const prompt = `
-    //   Act as a Universal AI Project Scoper, Lead Educator, and Business Strategist. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
-    //   Identify the required tools, materials, or prerequisites, and break down the project into exactly 6 or 7 progressive actionable tasks.
-      
-    //   You must respond strictly with a JSON object conforming exactly to this schema:
-    //   {
-    //     "projectName": "A catchy, short name for the project or learning goal",
-    //     "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma & UI Design', or 'Espresso Machine & Sourcing', or 'React & Tailwind')",
-    //     "tasks": [
-    //       {
-    //         "title": "Brief task title",
-    //         "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
-    //         "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
-    //         "status": "To Do",
-    //         "resources": ["Provide 2 actual resource links, official documentation, tutorials, or guides relevant to this task."]
-    //       }
-    //     ]
-    //   }
-    //   Do not wrap your response in markdown code blocks. Return only the raw JSON string.
-    // `;
-  const prompt = `
-      Act as an AI Product Strategist, Lead Educator, and Business Consultant. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
-      Identify the required tools/materials separated by commas without 'and' word, write a motivating strategic overview, and break the project down into exactly 6 or 7 progressive tasks.
-      
-      You must respond strictly with a JSON object conforming exactly to this schema:
-      {
-        "projectName": "A catchy, short name for the project or learning goal",
-        "description": "A high-level, motivating strategic overview of the project. Explain the core concept, key strategies for success, and how this roadmap helps them achieve their goal.",
-        "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma , UI Design', or 'Espresso Machine , Sourcing')",
-        "tasks": [
-          {
-            "title": "Brief task title",
-            "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
-            "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
-            "status": "To Do",
-            "resources": ["Provide 2 to 3 actual resource links, official documentation, tutorials, or guides relevant to this task."]
-          }
-        ]
-      }
-      Do not wrap your response in markdown code blocks. Return only the raw JSON string.
-    `;
-
-    
-    // Save the parsed workspace to MongoDB (include description!)
-
-    // Generate content using Gemini
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-
-    // Parse the JSON string sent back by Gemini
-    let parsedData;
-    try {
-      parsedData = JSON.parse(responseText);
-    } catch (error) {
-      res.status(500).json({
-        status: 'error',
-        message: 'Failed to process AI architect output. Please try again.',
-      });
-      return;
-    }
-
-    // Save the parsed workspace to MongoDB under the user's ID
-    const workspace = await ProjectWorkspace.create({
-      user: req.user._id,
-      projectName: parsedData.projectName,
-      description: parsedData.description, // Added description
-      techStack: parsedData.techStack,
-      tasks: parsedData.tasks,
-    });
-
-    res.status(201).json({
-      status: 'success',
-      data: workspace,
-    });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: (error as Error).message });
+  if (!idea) {
+    res.status(400).json({ status: 'fail', message: 'Please provide a project idea' });
+    return;
   }
-};
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'API Key is missing on the server. Please check environment configuration.' 
+    });
+    return;
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-3.1-flash-lite', 
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+
+  const prompt = `
+    Act as an AI Project Scoper, Lead Educator, and Business Consultant. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
+    Identify the required tools/materials, write a motivating strategic overview, and break the project down into exactly 4 or 5 progressive tasks.
+    Each task must contain exactly 3 concrete, step-by-step actionable sub-tasks (checklists).
+    
+    You must respond strictly with a JSON object conforming exactly to this schema:
+    {
+      "projectName": "A catchy, short name for the project or learning goal",
+      "description": "A high-level, motivating strategic overview of the project. Explain the core concept, key strategies for success, and how this roadmap helps them achieve their goal.",
+      "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma & UI Design', or 'Espresso Machine & Sourcing')",
+      "tasks": [
+        {
+          "title": "Brief task title",
+          "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
+          "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
+          "status": "To Do",
+          "resources": ["Provide 2 actual resource links, official documentation, tutorials, or guides relevant to this task."],
+          "subtasks": [
+            { "title": "First concrete sub-task action item", "isCompleted": false },
+            { "title": "Second concrete sub-task action item", "isCompleted": false },
+            { "title": "Third concrete sub-task action item", "isCompleted": false }
+          ]
+        }
+      ]
+    }
+    Do not wrap your response in markdown code blocks. Return only the raw JSON string.
+  `;
+
+  // Generate content using Gemini
+  const result = await model.generateContent(prompt);
+  const responseText = result.response.text();
+
+  // --- 1. DEFENSIVE JSON SANITIZATION ---
+  // Clean any accidental markdown backticks and trailing garbage from the AI response
+  let cleanedText = responseText.trim();
+  
+  // Strip leading markdown wrappers if they exist
+  if (cleanedText.startsWith('```json')) {
+    cleanedText = cleanedText.slice(7).trim();
+  } else if (cleanedText.startsWith('```')) {
+    cleanedText = cleanedText.slice(3).trim();
+  }
+
+  // Split by the backtick character and take the first element.
+  // This instantly discards all trailing backticks AND any malformed trailing characters (like '``}')!
+  cleanedText = cleanedText.split('`')[0].trim();
+  
+  // --- 2. SAFE JSON PARSING ---
+  let parsedData;
+  try {
+    parsedData = JSON.parse(cleanedText);
+  } catch (error) {
+    console.error('JSON Parsing failed. Raw AI response was:', responseText);
+    res.status(500).json({
+      status: 'error',
+      message: 'AI output formatting error. Please try again.',
+    });
+    return;
+  }
+
+  // --- 3. DEFENSIVE DATABASE VALIDATION FALLBACKS ---
+  // Ensure we provide fallbacks so Mongoose validation NEVER fails on 'required: true' fields
+  const workspace = await ProjectWorkspace.create({
+    user: req.user._id,
+    projectName: parsedData.projectName || 'Untitled Project',
+    description: parsedData.description || 'AI-generated strategic outline.',
+    techStack: parsedData.techStack || 'Prerequisites pending',
+    tasks: parsedData.tasks || [],
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: workspace,
+  });
+});
 // @desc    Get all project workspaces for the logged-in user
 // @route   GET /api/projects
 // @access  Private
@@ -210,3 +301,47 @@ export const deleteProject = async (req: AuthRequest, res: Response): Promise<vo
     res.status(500).json({ status: 'error', message: (error as Error).message });
   }
 };
+// @desc    Toggle a subtask's completion status
+// @route   PATCH /api/projects/:id/tasks/:taskId/subtasks/:subtaskId
+// @access  Private
+export const toggleSubtaskStatus = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const { isCompleted } = req.body;
+
+  if (isCompleted === undefined) {
+    res.status(400).json({ status: 'fail', message: 'Please provide isCompleted status' });
+    return;
+  }
+
+  // Find the project workspace belonging to the user
+  const project = await ProjectWorkspace.findOne({ _id: req.params.id, user: req.user._id });
+
+  if (!project) {
+    res.status(404).json({ status: 'fail', message: 'Project workspace not found' });
+    return;
+  }
+
+  // Find the parent task subdocument
+  const task = project.tasks.find((t: any) => t._id && t._id.toString() === req.params.taskId);
+  if (!task) {
+    res.status(404).json({ status: 'fail', message: 'Task not found in this workspace' });
+    return;
+  }
+
+  // Find the child subtask subdocument
+  const subtask = (task as any).subtasks.find((s: any) => s._id && s._id.toString() === req.params.subtaskId);
+  if (!subtask) {
+    res.status(404).json({ status: 'fail', message: 'Subtask not found' });
+    return;
+  }
+
+  subtask.isCompleted = isCompleted;
+  await project.save(); 
+
+  res.status(200).json({
+    status: 'success',
+    data: project,
+  });
+});

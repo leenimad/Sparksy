@@ -1,4 +1,14 @@
 import { Schema, model } from 'mongoose';
+const SubTaskSchema = new Schema({
+  title: {
+    type: String,
+    required: true,
+  },
+  isCompleted: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 const TaskSchema = new Schema({
   title: {
@@ -21,6 +31,7 @@ const TaskSchema = new Schema({
   resources: [{
     type: String,
   }],
+  subtasks: [SubTaskSchema],
 });
 
 const ProjectWorkspaceSchema = new Schema(
@@ -34,7 +45,7 @@ const ProjectWorkspaceSchema = new Schema(
       type: String,
       required: true,
     },
-     description: {
+    description: {
       type: String,
       required: true,
     },
@@ -42,7 +53,7 @@ const ProjectWorkspaceSchema = new Schema(
       type: String,
       required: true,
     },
-    tasks: [TaskSchema], 
+    tasks: [TaskSchema],
   },
   {
     timestamps: true,

@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import TaskCard from './TaskCard';
 
+interface SubTask {
+  _id: string;
+  title: string;
+  isCompleted: boolean;
+}
+
 interface Task {
   _id: string;
   title: string;
@@ -10,6 +16,7 @@ interface Task {
   estimatedTime: string;
   status: 'To Do' | 'In Progress' | 'Done';
   resources: string[];
+  subtasks: SubTask[]; 
 }
 
 // Strong TypeScript prop specifications
