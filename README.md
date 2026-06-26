@@ -161,4 +161,3 @@ cd Sparksy
    npm run dev
    ```
 5. Open your browser to `http://localhost:3000` and start scoping!
-```
