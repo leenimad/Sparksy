@@ -15,10 +15,9 @@ export const validate = (schema: z.ZodTypeAny) => {
         res.status(400).json({
           status: 'fail',
           message: 'Validation error',
-          // 1. Use .issues instead of .errors
-          // 2. Explicitly type err as z.ZodIssue
+   
           errors: error.issues.map((err: z.ZodIssue) => ({
-            field: err.path.slice(1).join('.'), // ignores 'body' top layer
+            field: err.path.slice(1).join('.'), 
             message: err.message,
           })),
         });

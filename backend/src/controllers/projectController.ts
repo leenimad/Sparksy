@@ -3,104 +3,6 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ProjectWorkspace } from '../models/ProjectWorkspace';
 import {asyncHandler} from '../middleware/asyncHandler';
-// @desc    Generate a new technical project workspace with an active task list
-// @route   POST /api/projects/generate
-// @access  Private (Needs JWT token)
-//////////////////////////////////////////////////
-// export const generateProjectWorkspace = async (
-//   req: AuthRequest,
-//   res: Response
-// ): Promise<void> => {
-//   try {
-//     const { idea } = req.body;
-
-//     if (!idea) {
-//       res.status(400).json({ status: 'fail', message: 'Please provide a project idea' });
-//       return;
-//     }
-
-//     const apiKey = process.env.GEMINI_API_KEY;
-//     if (!apiKey) {
-//       res.status(500).json({ 
-//         status: 'error', 
-//         message: 'API Key is missing on the server. Please check environment configuration.' 
-//       });
-//       return;
-//     }
-
-//     const genAI = new GoogleGenerativeAI(apiKey);
-
-//     const model = genAI.getGenerativeModel({
-//       model: 'gemini-3.1-flash-lite', 
-//       generationConfig: { responseMimeType: 'application/json' },
-//     });
-
-//   const prompt = `
-//       Act as an AI Project Scoper, AI Product Strategist, Lead Educator, and Business Consultant. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
-//       Identify the required tools/materials separated by commas without 'and' word, write a motivating strategic overview, and break the project down into exactly 5 or 6 progressive tasks.
-//         Each task must contain exactly 3 concrete, step-by-step actionable sub-tasks (checklists).
-      
-//       You must respond strictly with a JSON object conforming exactly to this schema:
-//       {
-//         "projectName": "A catchy, short name for the project or learning goal",
-//         "description": "A high-level, motivating strategic overview of the project. Explain the core concept, key strategies for success, and how this roadmap helps them achieve their goal.",
-//         "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma , UI Design', or 'Espresso Machine , Sourcing')",
-
-//         "tasks": [
-//         {
-//           "title": "Brief task title",
-//           "description": "Provide a clean description of what needs to be done. Suggest step-by-step guidance, starter tips, or structural references tailored to this task.",
-//           "estimatedTime": "Estimated effort in hours or days, e.g., 5 hours, 1 week",
-//           "status": "To Do",
-//           "resources": ["Provide 2 actual resource links, official documentation, tutorials, or guides relevant to this task."],
-//           "subtasks": [
-//             { "title": "First concrete sub-task action item", "isCompleted": false },
-//             { "title": "Second concrete sub-task action item", "isCompleted": false },
-//             { "title": "Third concrete sub-task action item", "isCompleted": false }
-//           ]
-//         }
-//       ]
-//     }
-//     Do not wrap your response in markdown code blocks. Return only the raw JSON string.
-//   `;
-
-//     // Generate content using Gemini
-//     const result = await model.generateContent(prompt);
-//     const responseText = result.response.text();
-
-//     // Parse the JSON string sent back by Gemini
-//     let parsedData;
-//     try {
-//       parsedData = JSON.parse(responseText);
-//     } catch (error) {
-//       res.status(500).json({
-//         status: 'error',
-//         message: 'Failed to process AI architect output. Please try again.',
-//       });
-//       return;
-//     }
-
-//     // Save the parsed workspace to MongoDB under the user's ID
-//     const workspace = await ProjectWorkspace.create({
-//       user: req.user._id,
-//       projectName: parsedData.projectName,
-//       description: parsedData.description,
-//       techStack: parsedData.techStack,
-//       tasks: parsedData.tasks,
-//     });
-
-//     res.status(201).json({
-//       status: 'success',
-//       data: workspace,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ status: 'error', message: (error as Error).message });
-//   }
-// };
-////////////////////////////////////////////
-// @desc    Generate a new technical project workspace with an active task list
-// @route   POST /api/projects/generate
-// @access  Private (Needs JWT token)
 export const generateProjectWorkspace = asyncHandler(async (
   req: AuthRequest,
   res: Response
@@ -130,8 +32,8 @@ export const generateProjectWorkspace = asyncHandler(async (
 
   const prompt = `
     Act as an AI Project Scoper, Lead Educator, and Business Consultant. You are scoping a creative, educational, or entrepreneurial project for: "${idea}".
-    Identify the required tools/materials, write a motivating strategic overview, and break the project down into exactly 4 or 5 progressive tasks.
-    Each task must contain exactly 3 concrete, step-by-step actionable sub-tasks (checklists).
+    Identify the required tools/materials, write a motivating strategic overview, and break the project down into exactly 5 or 6 progressive tasks.
+    Each task must contain exactly 3 concrete, step-by-step actionable sub-tasks (checklists). 
     
     You must respond strictly with a JSON object conforming exactly to this schema:
     {
@@ -343,5 +245,69 @@ export const toggleSubtaskStatus = asyncHandler(async (
   res.status(200).json({
     status: 'success',
     data: project,
+  });
+});
+// @desc    Generate a custom starter template/boilerplate for a specific task
+// @route   POST /api/projects/:id/tasks/:taskId/copilot
+// @access  Private (Needs JWT token)
+export const generateTaskTemplate = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const { id, taskId } = req.params;
+
+  // 1. Find the project workspace belonging to the user
+  const project = await ProjectWorkspace.findOne({ _id: id, user: req.user._id });
+  if (!project) {
+    res.status(404).json({ status: 'fail', message: 'Project workspace not found' });
+    return;
+  }
+
+  // 2. Find the specific parent task subdocument
+  const task = project.tasks.find((t: any) => t._id && t._id.toString() === taskId);
+  if (!task) {
+    res.status(404).json({ status: 'fail', message: 'Task not found in this workspace' });
+    return;
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'API Key is missing on the server.' 
+    });
+    return;
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
+
+  // 3. Construct a highly context-specific prompt
+  const prompt = `
+    You are an expert AI Developer, Professional Consultant, and Technical Writer. 
+    You are generating a highly practical, ready-to-use starter document, code boilerplate, configuration file, or action guideline tailored specifically to help the user complete this task.
+    
+    CONTEXT:
+    - Project: "${project.projectName}"
+    - Required Toolkit: "${project.techStack}"
+    - Task Title: "${task.title}"
+    - Task Description: "${task.description}"
+    
+    OBJECTIVE:
+    Generate a professional, premium-grade starter template, file boilerplate (e.g., TS middleware, HTML wireframes, JSON config), or detailed structural guide.
+    Provide actual code syntax or clear markdown checklist templates where applicable.
+    
+    OUTPUT FORMAT:
+    Return the output strictly in standard, beautifully structured Markdown. 
+    Do not write conversational introductions like "Sure, here is your template." Get straight to the markdown content.
+  `;
+
+  // Generate template content using Gemini
+  const result = await model.generateContent(prompt);
+  const templateText = result.response.text().trim();
+
+  res.status(200).json({
+    status: 'success',
+    data: templateText,
   });
 });

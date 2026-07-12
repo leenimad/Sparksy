@@ -27,6 +27,10 @@ const UserSchema = new Schema(
       enum: ['builder', 'admin'],
       default: 'builder',
     },
+    acquiredTools: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true, 

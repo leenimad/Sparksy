@@ -6,6 +6,7 @@ import {
   updateTaskStatus,
   deleteProject,
   toggleSubtaskStatus,
+  generateTaskTemplate,
 } from '../controllers/projectController';
 import { protect } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validateMiddleware';
@@ -21,4 +22,5 @@ router.get('/:id', getProjectById);
 router.patch('/:id/tasks/:taskId', updateTaskStatus);
 router.delete('/:id', deleteProject);
 router.patch('/:id/tasks/:taskId/subtasks/:subtaskId', toggleSubtaskStatus);
+router.post('/:id/tasks/:taskId/copilot', generateTaskTemplate);
 export default router;
