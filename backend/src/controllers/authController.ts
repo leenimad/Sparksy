@@ -98,7 +98,7 @@ export const getUserToolbox = asyncHandler(async (
 
 // @desc    Toggle a tool's ownership inside the user's global toolbox
 // @route   PATCH /api/auth/toolbox
-// @access  Private (Needs JWT token)
+// @access  Private (Needs JWT token)))
 export const toggleUserTool = asyncHandler(async (
   req: AuthRequest,
   res: Response
