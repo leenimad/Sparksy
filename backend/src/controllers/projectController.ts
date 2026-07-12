@@ -39,7 +39,7 @@ export const generateProjectWorkspace = asyncHandler(async (
     {
       "projectName": "A catchy, short name for the project or learning goal",
       "description": "A high-level, motivating strategic overview of the project. Explain the core concept, key strategies for success, and how this roadmap helps them achieve their goal.",
-      "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma & UI Design', or 'Espresso Machine & Sourcing')",
+      "techStack": "List the required tools, materials, or prerequisite skills needed (e.g., 'Figma , UI Design', or 'Espresso Machine , Sourcing') they should be separated by commas and do not use the word 'and' ",
       "tasks": [
         {
           "title": "Brief task title",
