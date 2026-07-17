@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, BookOpen, Kanban, ClipboardList, CheckCircle, Clock, Wrench, Search, CheckCircle2, FileDown } from 'lucide-react';
+import { ArrowLeft, Loader2, BookOpen, Kanban, ClipboardList, CheckCircle, Clock, Wrench, Search, CheckCircle2, FileDown, Globe, GlobeLock } from 'lucide-react';
 import api from '@/lib/api';
 import Cookies from 'js-cookie';
 import { jsPDF } from 'jspdf';
@@ -32,6 +32,7 @@ interface Project {
   description: string;
   techStack: string;
   tasks: Task[];
+  isPublic?: boolean;
 }
 
 export default function ProjectBoard() {
@@ -48,11 +49,11 @@ export default function ProjectBoard() {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  // 1. Global acquired tools loaded from DB instead of localStorage!
+  // Interactive Inventory State
   const [acquiredTools, setAcquiredTools] = useState<string[]>([]);
   const [exportingPDF, setExportingPDF] = useState(false);
 
-  // Reusable Dialog & Toast state
+  // Reusable Dialog & Toast state (Handles ALL Warnings/Errors)
   const [dialog, setDialog] = useState<{
     isOpen: boolean;
     type: 'error' | 'warning' | 'info';
@@ -86,7 +87,7 @@ export default function ProjectBoard() {
     setUserName(user.name);
 
     fetchProjectDetails();
-    fetchUserToolbox(); // 2. Fetch the toolbox from DB on mount!
+    fetchUserToolbox();
   }, [projectId, router]);
 
   const fetchProjectDetails = async () => {
@@ -108,7 +109,6 @@ export default function ProjectBoard() {
     }
   };
 
-  // 3. Fetch the global toolbox array from DB
   const fetchUserToolbox = async () => {
     try {
       const response = await api.get('/auth/toolbox');
@@ -240,16 +240,20 @@ export default function ProjectBoard() {
         const originalSelected = originalTasks.find((t: any) => t._id === taskId);
         if (originalSelected) setSelectedTask(originalSelected);
       }
-      alert('Failed to update sub-task status. Please try again.');
+      // REPLACED ALERT WITH DIALOG!
+      setDialog({
+        isOpen: true,
+        type: 'error',
+        title: 'Sub-task Update Failed',
+        message: 'Sparksy was unable to update the sub-task. Please check your connection and try again.',
+      });
     }
   };
 
-  // 4. Toggle Tool status securely in the MDB database via API!
   const toggleToolInventory = async (e: React.MouseEvent, tool: string) => {
-    e.stopPropagation(); // Prevents click from opening search page
+    e.stopPropagation();
     const isCurrentlyAcquired = acquiredTools.includes(tool);
 
-    // Optimistic UI update: Toggle instantly on screen
     const originalTools = [...acquiredTools];
     const updated = isCurrentlyAcquired
       ? acquiredTools.filter((t) => t !== tool)
@@ -257,17 +261,21 @@ export default function ProjectBoard() {
     setAcquiredTools(updated);
 
     try {
-      // Sync the toggle state with our DB
       await api.patch('/auth/toolbox', { tool });
-      
       setToast({
         isOpen: true,
         message: isCurrentlyAcquired ? `Removed "${tool}" from toolbox.` : `Added "${tool}" to toolbox!`,
       });
     } catch (err) {
-      console.error('Failed to sync tool status with server', err);
-      setAcquiredTools(originalTools); // Rollback on failure
-      alert('Failed to update tool status. Please try again.');
+      console.error('Failed to sync tool status', err);
+      setAcquiredTools(originalTools);
+      // REPLACED ALERT WITH DIALOG!
+      setDialog({
+        isOpen: true,
+        type: 'error',
+        title: 'Toolbox Sync Failed',
+        message: 'Sparksy was unable to update your toolbox status on the database. Please try again.',
+      });
     }
   };
 
@@ -370,9 +378,43 @@ export default function ProjectBoard() {
       });
     } catch (err) {
       console.error(err);
-      alert('Failed to export PDF.');
+      // REPLACED ALERT WITH DIALOG!
+      setDialog({
+        isOpen: true,
+        type: 'error',
+        title: 'Export Failed',
+        message: 'Sparksy was unable to export your project blueprint to PDF. Please try again.',
+      });
     } finally {
       setExportingPDF(false);
+    }
+  };
+
+  const handleToggleShare = async () => {
+    if (!project) return;
+    const targetShareState = !project.isPublic;
+
+    const originalProject = { ...project };
+    setProject({ ...project, isPublic: targetShareState });
+
+    try {
+      await api.patch(`/projects/${projectId}/share`, { isPublic: targetShareState });
+      setToast({
+        isOpen: true,
+        message: targetShareState 
+          ? 'Project published to the Public Marketplace!' 
+          : 'Project removed from the Public Marketplace.',
+      });
+    } catch (err) {
+      console.error('Failed to update sharing status', err);
+      setProject(originalProject);
+      // REPLACED ALERT WITH DIALOG!
+      setDialog({
+        isOpen: true,
+        type: 'error',
+        title: 'Sharing Update Failed',
+        message: 'Sparksy was unable to change your project sharing status. Please try again.',
+      });
     }
   };
 
@@ -424,6 +466,29 @@ export default function ProjectBoard() {
               <p className="text-xs text-stone-500 mt-1 font-medium">Project Workspace Board</p>
             </div>
           </div>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleToggleShare}
+            className={`flex items-center gap-1.5 !px-3.5 !py-1.5 text-xs shadow-sm cursor-pointer ${
+              project.isPublic 
+                ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-emerald-500/5' 
+                : 'bg-stone-100 dark:bg-stone-900 hover:bg-stone-200 dark:hover:bg-stone-800 border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400'
+            }`}
+          >
+            {project.isPublic ? (
+              <>
+                <Globe className="w-4 h-4 text-emerald-500 animate-pulse-subtle" />
+                Shared Publicly
+              </>
+            ) : (
+              <>
+                <GlobeLock className="w-4 h-4 text-stone-400 dark:text-stone-500" />
+                Make Public
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Tab Selection Row */}
@@ -631,3 +696,6 @@ export default function ProjectBoard() {
     </main>
   );
 }
+
+// // Simple Globe and GlobeLock helper icons
+// import { Globe, GlobeLock } from 'lucide-react';

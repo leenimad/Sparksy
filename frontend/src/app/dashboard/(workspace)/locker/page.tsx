@@ -240,7 +240,7 @@ export default function ToolLocker() {
                     {isOpen && (
                       <div className="grid grid-cols-1 gap-2.5 animate-fade-in">
                         {groupedAcquired[category].map((tool) => (
-                          <Card key={tool} className="!p-3.5 flex items-center justify-between group shadow-sm hover:border-stone-300 dark:hover:border-stone-800 duration-200">
+                          <Card key={tool} className="p-3.5! flex items-center justify-between group shadow-sm hover:border-stone-300 dark:hover:border-stone-800 duration-200">
                             <div className="flex items-center gap-3">
                               <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500" />
                               <span className="text-xs font-semibold text-stone-700 dark:text-stone-300">{tool}</span>
@@ -302,7 +302,7 @@ export default function ToolLocker() {
                           <Card
                             key={tool}
                             onClick={() => handleToolSearch(tool)}
-                            className="!p-3.5 flex items-center justify-between group hover:border-amber-500/40 cursor-pointer shadow-sm duration-200"
+                            className="p-3.5! flex items-center justify-between group hover:border-amber-500/40 cursor-pointer shadow-sm duration-200"
                           >
                             <div className="flex items-center gap-3">
                               <div
