@@ -53,7 +53,12 @@ const ProjectWorkspaceSchema = new Schema(
       type: String,
       required: true,
     },
-    tasks: [TaskSchema],
+     tasks: [TaskSchema],
+   
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

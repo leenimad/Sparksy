@@ -311,3 +311,95 @@ export const generateTaskTemplate = asyncHandler(async (
     data: templateText,
   });
 });
+// @desc    Toggle project sharing status (Public / Private)
+// @route   PATCH /api/projects/:id/share
+// @access  Private (Needs JWT token)
+export const toggleProjectShare = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const { isPublic } = req.body;
+
+  if (isPublic === undefined) {
+    res.status(400).json({ status: 'fail', message: 'Please provide isPublic status' });
+    return;
+  }
+
+  const project = await ProjectWorkspace.findOne({ _id: req.params.id, user: req.user._id });
+
+  if (!project) {
+    res.status(404).json({ status: 'fail', message: 'Project workspace not found' });
+    return;
+  }
+
+  project.isPublic = isPublic;
+  await project.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: project,
+  });
+});
+
+// @desc    Get all publicly shared project workspaces from all users
+// @route   GET /api/projects/public
+// @access  Private (Needs JWT token)
+export const getPublicProjects = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  // Fetch templates where isPublic is true, populating only the creator's name
+  const publicProjects = await ProjectWorkspace.find({ isPublic: true })
+    .populate('user', 'name')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    status: 'success',
+    results: publicProjects.length,
+    data: publicProjects,
+  });
+});
+
+// @desc    Clone a public project workspace into the logged-in user's active workspaces
+// @route   POST /api/projects/:id/clone
+// @access  Private (Needs JWT token)
+export const cloneProject = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  // Find the public template project
+  const templateProject = await ProjectWorkspace.findOne({ _id: req.params.id, isPublic: true });
+
+  if (!templateProject) {
+    res.status(404).json({ status: 'fail', message: 'Public template project not found' });
+    return;
+  }
+
+  // Deep clone all tasks, resetting statuses to 'To Do' and subtasks isCompleted to false
+  const clonedTasks = templateProject.tasks.map((task: any) => ({
+    title: task.title,
+    description: task.description,
+    estimatedTime: task.estimatedTime,
+    status: 'To Do', // Reset state
+    resources: task.resources,
+    subtasks: task.subtasks.map((sub: any) => ({
+      title: sub.title,
+      isCompleted: false, // Reset checklist
+    })),
+  }));
+
+  // Create the fresh cloned project workspace for the current user
+  const clonedProject = await ProjectWorkspace.create({
+    user: req.user._id,
+    projectName: templateProject.projectName,
+    description: templateProject.description,
+    techStack: templateProject.techStack,
+    tasks: clonedTasks,
+    isPublic: false, // Cloned copies are private by default
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: clonedProject,
+  });
+});
