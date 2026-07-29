@@ -2,27 +2,50 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Sparkles, Terminal, Wrench, ShoppingBag, LogOut } from 'lucide-react';
+import { Sparkles, Terminal, Wrench, ShoppingBag, LogOut, ShieldCheck } from 'lucide-react';
 import Cookies from 'js-cookie';
+import api from '@/lib/api';
 import ThemeToggle from '@/components/ThemeToggle';
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('builder');
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
     const token = Cookies.get('token');
 
-    if (!token || !userStr) {
+    if (!token) {
       router.push('/login');
       return;
     }
 
-    const user = JSON.parse(userStr);
-    setUserName(user.name);
+    fetchUserProfile();
   }, [router]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      if (response.data.status === 'success') {
+        const fetchedUser = response.data.data;
+        setUserName(fetchedUser.name);
+        setUserRole(fetchedUser.role || 'builder');
+        localStorage.setItem('user', JSON.stringify(fetchedUser));
+
+        // 1. STRICT ADMIN ROUTE GUARD:
+        // If user is an Admin and tries to access personal builder routes (/dashboard or /dashboard/locker), bounce them to /dashboard/admin!
+        if (
+          fetchedUser.role === 'admin' && 
+          (pathname === '/dashboard' || pathname === '/dashboard/locker')
+        ) {
+          router.push('/dashboard/admin');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync profile with server', err);
+    }
+  };
 
   const handleLogout = () => {
     Cookies.remove('token');
@@ -30,11 +53,17 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
     router.push('/login');
   };
 
-  const menuItems = [
-    { name: 'Active Workspaces', href: '/dashboard', icon: <Terminal className="w-4 h-4" /> },
-    { name: 'My Tool Locker', href: '/dashboard/locker', icon: <Wrench className="w-4 h-4" /> },
-    { name: 'Marketplace', href: '/dashboard/marketplace', icon: <ShoppingBag className="w-4 h-4" /> },
-  ];
+  // 2. STRICT ROLE-BASED NAVIGATION ITEMS (Completely isolates Admin from Builder views!)
+  const menuItems = userRole === 'admin'
+    ? [
+        { name: 'Admin Panel', href: '/dashboard/admin', icon: <ShieldCheck className="w-4 h-4 text-amber-500" /> },
+        { name: 'Marketplace Moderation', href: '/dashboard/marketplace', icon: <ShoppingBag className="w-4 h-4" /> },
+      ]
+    : [
+        { name: 'Active Workspaces', href: '/dashboard', icon: <Terminal className="w-4 h-4" /> },
+        { name: 'My Tool Locker', href: '/dashboard/locker', icon: <Wrench className="w-4 h-4" /> },
+        { name: 'Marketplace', href: '/dashboard/marketplace', icon: <ShoppingBag className="w-4 h-4" /> },
+      ];
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-[#0c0a09] text-stone-900 dark:text-white flex transition-colors duration-300">
@@ -77,7 +106,10 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
               <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm font-bold text-amber-600 dark:text-amber-400">
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-stone-700 dark:text-stone-300 text-sm font-semibold truncate max-w-[100px]">{userName}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-stone-700 dark:text-stone-300 text-sm font-semibold truncate max-w-[90px]">{userName}</span>
+                <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">{userRole}</span>
+              </div>
             </div>
             <ThemeToggle />
           </div>
@@ -92,7 +124,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Dynamic Content Panel (Margined to fit the sidebar) */}
+      {/* Dynamic Content Panel */}
       <div className="flex-1 pl-64 min-h-screen">
         {children}
       </div>

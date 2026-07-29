@@ -34,6 +34,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         token: generateToken(user._id.toString()),
       },
     });
@@ -69,6 +70,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
         token: generateToken(user._id.toString()),
       },
     });
@@ -76,6 +78,25 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ status: 'error', message: (error as Error).message });
   }
 };
+// @desc    Get current logged-in user profile
+// @route   GET /api/auth/me
+// @access  Private (Needs JWT token)
+export const getMe = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const user = await User.findById(req.user._id).select('-password');
+
+  if (!user) {
+    res.status(404).json({ status: 'fail', message: 'User not found' });
+    return;
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: user,
+  });
+});
 // @desc    Get the logged-in user's global acquired tools
 // @route   GET /api/auth/toolbox
 // @access  Private (Needs JWT token)

@@ -29,10 +29,17 @@ export default function Register() {
     try {
       const response = await api.post('/auth/register', { name, email, password });
       
-      if (response.data.status === 'success') {
-        Cookies.set('token', response.data.data.token, { expires: 7, secure: true, sameSite: 'strict' });
-        localStorage.setItem('user', JSON.stringify(response.data.data));
-        router.push('/dashboard');
+     if (response.data.status === 'success') {
+        const userData = response.data.data;
+        Cookies.set('token', userData.token, { expires: 7, secure: true, sameSite: 'strict' });
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Admin-first direct routing!
+        if (userData.role === 'admin') {
+          router.push('/dashboard/admin');
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Something went wrong. Please try again.');

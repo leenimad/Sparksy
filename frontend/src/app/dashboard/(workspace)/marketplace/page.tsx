@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Wrench, Search, Plus, Sparkles, ClipboardList, Users } from 'lucide-react';
+import { Loader2, Wrench, Search, Plus, Sparkles, ClipboardList, Users, ShieldAlert } from 'lucide-react';
 import api from '@/lib/api';
 
 // Import UI Primitives
@@ -11,13 +11,12 @@ import Dialog from '@/components/ui/Dialog';
 import Toast from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 
-// central types
 interface PublicProject {
   _id: string;
   projectName: string;
   description: string;
   techStack: string;
-  user: { _id: string; name: string }; // Populated creator details!
+  user: { _id: string; name: string };
   tasks: any[];
   createdAt: string;
 }
@@ -27,11 +26,15 @@ export default function Marketplace() {
   const [templates, setTemplates] = useState<PublicProject[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Track which card is currently being cloned to show loading on that card only
+  // Track user role for moderation features
+  const [userRole, setUserRole] = useState('builder');
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Reusable feedback states
+  // 1. Admin Moderation target tracking state
+  const [templateToUnpublish, setTemplateToUnpublish] = useState<{ id: string; name: string } | null>(null);
+
+  // Feedback states
   const [dialog, setDialog] = useState<{
     isOpen: boolean;
     type: 'error' | 'warning' | 'info';
@@ -53,6 +56,11 @@ export default function Marketplace() {
   });
 
   useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setUserRole(user.role || 'builder');
+    }
     fetchPublicTemplates();
   }, []);
 
@@ -69,7 +77,6 @@ export default function Marketplace() {
     }
   };
 
-  // 1. Trigger the Advanced Recursive Cloning Engine!
   const handleCloneWorkspace = async (e: React.MouseEvent, templateId: string, projectName: string) => {
     e.stopPropagation();
     setCloningId(templateId);
@@ -83,7 +90,6 @@ export default function Marketplace() {
           message: `Successfully cloned "${projectName}" directly to your active workspaces!`,
         });
         
-        // 2. Redirect back to workspaces dashboard after 1.5 seconds so they can see the toast
         setTimeout(() => {
           router.push('/dashboard');
         }, 1500);
@@ -101,7 +107,42 @@ export default function Marketplace() {
     }
   };
 
-  // 3. Real-time client-side search filtering
+  // 2. Trigger Custom Warning Dialog instead of native confirm()
+  const handleAdminUnpublishClick = (e: React.MouseEvent, templateId: string, projectName: string) => {
+    e.stopPropagation();
+    setTemplateToUnpublish({ id: templateId, name: projectName });
+    setDialog({
+      isOpen: true,
+      type: 'warning',
+      title: 'Unpublish Template',
+      message: `ADMIN MODERATION: Are you sure you want to unpublish "${projectName}" from the public marketplace?`,
+    });
+  };
+
+  // 3. Execution function triggered upon Dialog confirmation
+  const executeAdminUnpublish = async () => {
+    if (!templateToUnpublish) return;
+
+    try {
+      await api.patch(`/projects/${templateToUnpublish.id}/share`, { isPublic: false });
+      setTemplates((prev) => prev.filter((t) => t._id !== templateToUnpublish.id));
+      setToast({
+        isOpen: true,
+        message: `Admin Moderation: Unpublished "${templateToUnpublish.name}" from marketplace.`,
+      });
+    } catch (err) {
+      console.error('Failed to unpublish project', err);
+      setDialog({
+        isOpen: true,
+        type: 'error',
+        title: 'Moderation Failed',
+        message: 'Unable to modify public status for this template.',
+      });
+    } finally {
+      setTemplateToUnpublish(null);
+    }
+  };
+
   const filteredTemplates = templates.filter((template) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -124,9 +165,13 @@ export default function Marketplace() {
       {/* Header Info */}
       <div className="mb-10 max-w-5xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-200">Public Marketplace</h1>
+          <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-200">
+            {userRole === 'admin' ? 'Marketplace Moderation' : 'Public Marketplace'}
+          </h1>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-            Browse, learn, and instantly clone ready-to-use blueprints, toolkits, and roadmap templates created by the Sparksy community.
+            {userRole === 'admin' 
+              ? 'Administrator oversight: Monitor, audit, and moderate public community project blueprints.' 
+              : 'Browse, learn, and instantly clone ready-to-use blueprints created by the Sparksy community.'}
           </p>
         </div>
 
@@ -165,7 +210,6 @@ export default function Marketplace() {
                     </h3>
                   </div>
 
-                  {/* Creator Author Name Badge */}
                   <div className="flex items-center gap-1 text-[10px] text-stone-500 font-bold uppercase tracking-wider mb-4">
                     <Users className="w-3.5 h-3.5 text-amber-500" />
                     <span>Scoped by: {template.user?.name || 'Anonymous'}</span>
@@ -181,23 +225,37 @@ export default function Marketplace() {
                   </p>
                 </div>
 
-                <div className="border-t border-stone-200/50 dark:border-stone-800/40 pt-4 flex items-center justify-between">
+                <div className="border-t border-stone-200/50 dark:border-stone-800/40 pt-4 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 text-stone-500 text-xs font-semibold">
                     <ClipboardList className="w-4 h-4 text-amber-500" />
                     <span>{template.tasks?.length || 0} Steps</span>
                   </div>
 
-                  {/* Asynchronous Clone Button */}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    loading={cloningId === template._id}
-                    onClick={(e) => handleCloneWorkspace(e, template._id, template.projectName)}
-                    className="flex items-center gap-1.5 !px-3 !py-1.5 text-xs shadow-sm"
-                  >
-                    {cloningId !== template._id && <Plus className="w-3.5 h-3.5 text-amber-500" />}
-                    Clone Workspace
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {userRole === 'admin' ? (
+                      /* Connected Custom Click Handler */
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={(e) => handleAdminUnpublishClick(e, template._id, template.projectName)}
+                        className="flex items-center gap-1 !px-2.5 !py-1 text-xs"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
+                        Unpublish
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={cloningId === template._id}
+                        onClick={(e) => handleCloneWorkspace(e, template._id, template.projectName)}
+                        className="flex items-center gap-1.5 !px-3 !py-1.5 text-xs shadow-sm"
+                      >
+                        {cloningId !== template._id && <Plus className="w-3.5 h-3.5 text-amber-500" />}
+                        Clone Workspace
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}
@@ -205,13 +263,17 @@ export default function Marketplace() {
         )}
       </div>
 
-      {/* Reusable Dialog Primitive */}
+      {/* 4. Mount Reusable Dialog (Supports Confirm / Cancel triggers for Admin Unpublishing!) */}
       <Dialog
         isOpen={dialog.isOpen}
-        onClose={() => setDialog((prev) => ({ ...prev, isOpen: false }))}
+        onClose={() => {
+          setDialog((prev) => ({ ...prev, isOpen: false }));
+          setTemplateToUnpublish(null); // Clear state
+        }}
         type={dialog.type}
         title={dialog.title}
         message={dialog.message}
+        onConfirm={templateToUnpublish ? executeAdminUnpublish : undefined}
       />
 
       {/* Reusable Toast Primitive */}
