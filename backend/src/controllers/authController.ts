@@ -153,3 +153,74 @@ export const toggleUserTool = asyncHandler(async (
     data: user.acquiredTools,
   });
 });
+
+// @desc    Update user profile details (name & email)
+// @route   PATCH /api/auth/profile
+// @access  Private (Needs JWT token)
+export const updateProfile = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const { name, email } = req.body;
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404).json({ status: 'fail', message: 'User not found' });
+    return;
+  }
+
+  // If changing email, verify it is not already taken by another account
+  if (email !== user.email) {
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      res.status(400).json({ status: 'fail', message: 'Email address is already taken by another account' });
+      return;
+    }
+  }
+
+  user.name = name;
+  user.email = email;
+  await user.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+});
+
+// @desc    Change user password
+// @route   PATCH /api/auth/password
+// @access  Private (Needs JWT token)
+export const changePassword = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const { currentPassword, newPassword } = req.body;
+
+  // Select password field explicitly
+  const user = await User.findById(req.user._id).select('+password');
+  if (!user) {
+    res.status(404).json({ status: 'fail', message: 'User not found' });
+    return;
+  }
+
+  // Verify current password match using bcrypt method
+  const isMatch = await (user as any).matchPassword(currentPassword);
+  if (!isMatch) {
+    res.status(400).json({ status: 'fail', message: 'Current password is incorrect' });
+    return;
+  }
+
+  user.password = newPassword; // Mongoose pre('save') hook will hash this automatically!
+  await user.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password updated successfully',
+  });
+});
