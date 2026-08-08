@@ -30,3 +30,16 @@ export const changePasswordSchema = z.object({
     newPassword: z.string().min(6, 'New password must be at least 6 characters long'),
   }),
 });
+// 3. Forgot Password Schema
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+  }),
+});
+
+// 4. Reset Password Schema
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    password: z.string().min(6, 'Password must be at least 6 characters long'),
+  }),
+});
