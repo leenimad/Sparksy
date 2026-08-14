@@ -186,23 +186,26 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response): Promise
 // @desc    Delete a project workspace
 // @route   DELETE /api/projects/:id
 // @access  Private
-export const deleteProject = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const project = await ProjectWorkspace.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+export const deleteProject = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const query = req.user.role === 'admin'
+    ? { _id: req.params.id }
+    : { _id: req.params.id, user: req.user._id };
 
-    if (!project) {
-      res.status(404).json({ status: 'fail', message: 'Project not found' });
-      return;
-    }
+  const project = await ProjectWorkspace.findOneAndDelete(query);
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Project workspace deleted successfully',
-    });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: (error as Error).message });
+  if (!project) {
+    res.status(404).json({ status: 'fail', message: 'Project not found' });
+    return;
   }
-};
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Project workspace deleted successfully',
+  });
+});
 // @desc    Toggle a subtask's completion status
 // @route   PATCH /api/projects/:id/tasks/:taskId/subtasks/:subtaskId
 // @access  Private
@@ -325,7 +328,12 @@ export const toggleProjectShare = asyncHandler(async (
     return;
   }
 
-  const project = await ProjectWorkspace.findOne({ _id: req.params.id, user: req.user._id });
+  // ROLE-AWARE QUERY: Admins can modify any template; Builders only their own!
+  const query = req.user.role === 'admin'
+    ? { _id: req.params.id }
+    : { _id: req.params.id, user: req.user._id };
+
+  const project = await ProjectWorkspace.findOne(query);
 
   if (!project) {
     res.status(404).json({ status: 'fail', message: 'Project workspace not found' });
