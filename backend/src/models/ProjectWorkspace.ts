@@ -53,16 +53,38 @@ const ProjectWorkspaceSchema = new Schema(
       type: String,
       required: true,
     },
-     tasks: [TaskSchema],
-   
+      tasks: [TaskSchema],
     isPublic: {
       type: Boolean,
       default: false,
+    },
+    // 1. Add pricing fields for marketplace monetization
+    isPaid: {
+      type: Boolean,
+      default: false,
+    },
+    price: {
+      type: Number,
+      default: 0,
+    },
+   //Finished Product & Deliverable Assets
+    liveDemoUrl: {
+      type: String,
+      default: '',
+    },
+    sourceCodeUrl: {
+      type: String,
+      default: '',
+    },
+    deliverables: {
+      type: [String],
+      default: [],
     },
   },
   {
     timestamps: true,
   }
 );
+
 
 export const ProjectWorkspace = model('ProjectWorkspace', ProjectWorkspaceSchema);

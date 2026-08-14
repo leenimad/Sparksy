@@ -318,7 +318,7 @@ export const toggleProjectShare = asyncHandler(async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
-  const { isPublic } = req.body;
+  const { isPublic, isPaid, price, liveDemoUrl, sourceCodeUrl, deliverables } = req.body;
 
   if (isPublic === undefined) {
     res.status(400).json({ status: 'fail', message: 'Please provide isPublic status' });
@@ -333,6 +333,12 @@ export const toggleProjectShare = asyncHandler(async (
   }
 
   project.isPublic = isPublic;
+  project.isPaid = isPaid ?? false;
+  project.price = price ?? 0;
+  project.liveDemoUrl = liveDemoUrl ?? '';
+  project.sourceCodeUrl = sourceCodeUrl ?? '';
+  project.deliverables = deliverables ?? [];
+  
   await project.save();
 
   res.status(200).json({
@@ -367,35 +373,35 @@ export const cloneProject = asyncHandler(async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
-  // Find the public template project
   const templateProject = await ProjectWorkspace.findOne({ _id: req.params.id, isPublic: true });
 
   if (!templateProject) {
-    res.status(404).json({ status: 'fail', message: 'Public template project not found' });
+    res.status(404).json({ status: 'fail', message: 'Public product template not found' });
     return;
   }
 
-  // Deep clone all tasks, resetting statuses to 'To Do' and subtasks isCompleted to false
   const clonedTasks = templateProject.tasks.map((task: any) => ({
     title: task.title,
     description: task.description,
     estimatedTime: task.estimatedTime,
-    status: 'To Do', // Reset state
+    status: 'To Do',
     resources: task.resources,
     subtasks: task.subtasks.map((sub: any) => ({
       title: sub.title,
-      isCompleted: false, // Reset checklist
+      isCompleted: false,
     })),
   }));
 
-  // Create the fresh cloned project workspace for the current user
   const clonedProject = await ProjectWorkspace.create({
     user: req.user._id,
     projectName: templateProject.projectName,
     description: templateProject.description,
     techStack: templateProject.techStack,
     tasks: clonedTasks,
-    isPublic: false, // Cloned copies are private by default
+    isPublic: false,
+    liveDemoUrl: templateProject.liveDemoUrl,
+    sourceCodeUrl: templateProject.sourceCodeUrl,
+    deliverables: templateProject.deliverables,
   });
 
   res.status(201).json({
