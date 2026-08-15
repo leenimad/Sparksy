@@ -33,10 +33,12 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   
   const [userRole, setUserRole] = useState('builder');
+  const [currentUserId, setCurrentUserId] = useState('');
+  
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Unlocked products state (stores links after free clone or paid purchase!)
+  // Unlocked product state
   const [unlockedAsset, setUnlockedAsset] = useState<{ name: string; url: string } | null>(null);
 
   // Selected template for Checkout Modal
@@ -68,6 +70,7 @@ export default function Marketplace() {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
+      setCurrentUserId(user._id || '');
       setUserRole(user.role || 'builder');
     }
     fetchPublicTemplates();
@@ -93,7 +96,6 @@ export default function Marketplace() {
       const response = await api.post(`/projects/${template._id}/clone`);
       
       if (response.data.status === 'success') {
-        // Unlock asset link immediately!
         if (template.sourceCodeUrl) {
           setUnlockedAsset({ name: template.projectName, url: template.sourceCodeUrl });
         }
@@ -204,83 +206,91 @@ export default function Marketplace() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => (
-              <Card
-                key={template._id}
-                className="flex flex-col justify-between hover:border-amber-500/40 group relative shadow-md duration-300"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-stone-800 dark:text-stone-200 text-base leading-tight pr-2">
-                      {template.projectName}
-                    </h3>
-                    
-                    {/* Price Badge */}
-                    <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      template.isPaid 
-                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
-                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                    }`}>
-                      {template.isPaid ? `$${template.price}.00` : 'FREE'}
-                    </span>
-                  </div>
+            {filteredTemplates.map((template) => {
+              const isOwner = template.user?._id === currentUserId;
 
-                  {/* Creator Info & Live Preview Button */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-1 text-[10px] text-stone-500 font-bold uppercase tracking-wider">
-                      <Users className="w-3.5 h-3.5 text-amber-500" />
-                      <span>By: {template.user?.name || 'Creator'}</span>
+              return (
+                <Card
+                  key={template._id}
+                  className="flex flex-col justify-between hover:border-amber-500/40 group relative shadow-md duration-300"
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-stone-800 dark:text-stone-200 text-base leading-tight pr-2">
+                        {template.projectName}
+                      </h3>
+                      
+                      {/* Price Badge */}
+                      <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                        template.isPaid 
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                      }`}>
+                        {template.isPaid ? `$${template.price}.00` : 'FREE'}
+                      </span>
                     </div>
 
-                    {template.liveDemoUrl && (
-                      <a
-                        href={template.liveDemoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
-                      >
-                        <span>Live Demo</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                    {/* Creator Info & Live Preview Button */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-1 text-[10px] text-stone-500 font-bold uppercase tracking-wider">
+                        <Users className="w-3.5 h-3.5 text-amber-500" />
+                        <span>By: {isOwner ? 'You (Creator)' : template.user?.name || 'Creator'}</span>
+                      </div>
+
+                      {template.liveDemoUrl && (
+                        <a
+                          href={template.liveDemoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                        >
+                          <span>Live Demo</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-2 mb-4">
+                      {template.description}
+                    </p>
+
+                    {/* What's Included Deliverables List */}
+                    {template.deliverables && template.deliverables.length > 0 && (
+                      <div className="mb-6 space-y-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">What&apos;s Included:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {template.deliverables.map((item, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 text-[10px] font-medium text-stone-600 dark:text-stone-300 rounded-md"
+                            >
+                              <PackageCheck className="w-3 h-3 text-emerald-500" />
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-2 mb-4">
-                    {template.description}
-                  </p>
-
-                  {/* What's Included Deliverables List */}
-                  {template.deliverables && template.deliverables.length > 0 && (
-                    <div className="mb-6 space-y-1.5">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">What&apos;s Included:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {template.deliverables.map((item, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-stone-50 dark:bg-stone-900 border border-stone-200/60 dark:border-stone-800 text-[10px] font-medium text-stone-600 dark:text-stone-300 rounded-md"
-                          >
-                            <PackageCheck className="w-3 h-3 text-emerald-500" />
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t border-stone-200/50 dark:border-stone-800/40 pt-4 flex items-center justify-end gap-2">
-                  {userRole === 'admin' ? (
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={(e) => handleAdminUnpublishClick(e, template._id, template.projectName)}
-                      className="flex items-center gap-1 !px-2.5 !py-1 text-xs"
-                    >
-                      <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
-                      Unpublish
-                    </Button>
-                  ) : (
-                    template.isPaid ? (
+                  {/* Action Footer */}
+                  <div className="border-t border-stone-200/50 dark:border-stone-800/40 pt-4 flex items-center justify-end gap-2">
+                    {userRole === 'admin' ? (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={(e) => handleAdminUnpublishClick(e, template._id, template.projectName)}
+                        className="flex items-center gap-1 !px-2.5 !py-1 text-xs"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 mr-0.5" />
+                        Unpublish
+                      </Button>
+                    ) : isOwner ? (
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 select-none">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        Your Listing (Owner)
+                      </span>
+                    ) : template.isPaid ? (
                       <Button
                         size="sm"
                         onClick={() => setCheckoutTemplate(template)}
@@ -300,11 +310,11 @@ export default function Marketplace() {
                         {cloningId !== template._id && <Plus className="w-3.5 h-3.5 text-amber-500" />}
                         Get Free Product
                       </Button>
-                    )
-                  )}
-                </div>
-              </Card>
-            ))}
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

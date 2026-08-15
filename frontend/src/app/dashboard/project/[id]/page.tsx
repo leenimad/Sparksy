@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, BookOpen, Kanban, ClipboardList, CheckCircle, Clock, Wrench, Search, CheckCircle2, FileDown, Globe, GlobeLock } from 'lucide-react';
+import { ArrowLeft, Loader2, BookOpen, Kanban, ClipboardList, CheckCircle, Clock, Wrench, Search, CheckCircle2, FileDown, Globe, GlobeLock, PackageCheck, Download } from 'lucide-react';
 import api from '@/lib/api';
 import Cookies from 'js-cookie';
-import { jsPDF } from 'jspdf';
 
 // Import our modular components and UI primitives
 import Navbar from '@/components/Navbar';
@@ -15,7 +14,7 @@ import Card from '@/components/ui/Card';
 import Dialog from '@/components/ui/Dialog';
 import Toast from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
-import PublishModal from '@/components/PublishModal'; // 1. Import PublishModal!
+import PublishModal from '@/components/PublishModal';
 
 interface Task {
   _id: string;
@@ -55,7 +54,7 @@ export default function ProjectBoard() {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  // 2. Publish Modal State
+  // Publish Modal State
   const [publishModalOpen, setPublishModalOpen] = useState(false);
 
   // Interactive Inventory State
@@ -148,7 +147,7 @@ export default function ProjectBoard() {
     const taskToMove = project.tasks[taskIndex];
     if (taskToMove.status === targetStatus) return;
 
-    // --- FORWARD PROGRESSION VALIDATION ---
+    // Forward validation
     if (targetStatus === 'In Progress' || targetStatus === 'Done') {
       for (let i = 0; i < taskIndex; i++) {
         if (project.tasks[i].status !== 'Done') {
@@ -163,7 +162,7 @@ export default function ProjectBoard() {
       }
     }
 
-    // --- BACKWARD RETRACTION VALIDATION ---
+    // Backward validation
     if (targetStatus === 'To Do' || targetStatus === 'In Progress') {
       for (let i = taskIndex + 1; i < project.tasks.length; i++) {
         if (project.tasks[i].status === 'In Progress' || project.tasks[i].status === 'Done') {
@@ -178,7 +177,7 @@ export default function ProjectBoard() {
       }
     }
 
-    // --- OPTIMISTIC UI UPDATE ---
+    // Optimistic UI update
     const originalTasks = [...project.tasks];
     const updatedTasks = project.tasks.map((t) => 
       t._id === taskId ? { ...t, status: targetStatus } : t
@@ -206,7 +205,7 @@ export default function ProjectBoard() {
       }
     } catch (err) {
       console.error('Failed to update status on server', err);
-      setProject({ ...project, tasks: originalTasks }); // Rollback
+      setProject({ ...project, tasks: originalTasks });
       setDialog({
         isOpen: true,
         type: 'error',
@@ -292,11 +291,13 @@ export default function ProjectBoard() {
     window.open(`https://www.google.com/search?q=${query}`, '_blank');
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!project) return;
     setExportingPDF(true);
 
     try {
+      // Lazy load jsPDF on demand for optimal speed
+      const { jsPDF } = await import('jspdf');
       const doc = new jsPDF();
       let y = 20;
 
@@ -396,15 +397,12 @@ export default function ProjectBoard() {
     }
   };
 
-  // 3. Open Publish Modal or Unpublish directly
   const handleToggleShareClick = () => {
     if (!project) return;
     
     if (!project.isPublic) {
-      // Open custom Publish Modal to choose Free vs Custom Price!
       setPublishModalOpen(true);
     } else {
-      // Direct Unpublish
       executePublish({
         isPaid: false,
         price: 0,
@@ -415,8 +413,7 @@ export default function ProjectBoard() {
     }
   };
 
-  // 4. Execution function for publishing
-   const executePublish = async (publishData: {
+  const executePublish = async (publishData: {
     isPaid: boolean;
     price: number;
     liveDemoUrl: string;
@@ -424,7 +421,7 @@ export default function ProjectBoard() {
     deliverables: string[];
   }) => {
     if (!project) return;
-    const isPublic = true;
+    const isPublic = !project.isPublic || publishData.isPaid || publishData.price > 0 || Boolean(publishData.sourceCodeUrl);
 
     const originalProject = { ...project };
     setProject({ ...project, isPublic, ...publishData });
@@ -436,7 +433,9 @@ export default function ProjectBoard() {
       });
       setToast({
         isOpen: true,
-        message: `Product listed on Marketplace as ${publishData.isPaid ? `$${publishData.price}.00 Premium` : 'Free'} asset!`,
+        message: isPublic 
+          ? `Product listed on Marketplace as ${publishData.isPaid ? `$${publishData.price}.00 Premium` : 'Free'} asset!` 
+          : 'Project removed from the Public Marketplace.',
       });
     } catch (err) {
       console.error('Failed to update sharing status', err);
@@ -584,7 +583,7 @@ export default function ProjectBoard() {
                 </div>
               </Card>
 
-              {/* Column 2: DB-Synchronized Required Toolkit Card */}
+              {/* Column 2: Required Toolkit Card */}
               <Card className="!p-8 flex flex-col justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-stone-800 dark:text-stone-200 mb-2 flex items-center gap-2">
@@ -634,6 +633,30 @@ export default function ProjectBoard() {
                 </div>
               </Card>
             </div>
+
+            {/* UNLOCKED ASSETS PERMANENT ACCESS BANNER (Shows if sourceCodeUrl exists!) */}
+            {project.sourceCodeUrl && (
+              <Card className="!p-5 bg-gradient-to-r from-amber-500/5 to-orange-500/5 border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-500 flex-shrink-0">
+                    <PackageCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-stone-800 dark:text-stone-200">Unlocked Product Deliverables</h4>
+                    <p className="text-xs text-stone-500 dark:text-stone-400">You have full, permanent access to the source code and assets for this workspace.</p>
+                  </div>
+                </div>
+                <a
+                  href={project.sourceCodeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shadow-sm hover:opacity-90 transition-all flex-shrink-0"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Access Source Assets
+                </a>
+              </Card>
+            )}
 
             {/* Timeline */}
             <div>
@@ -701,13 +724,14 @@ export default function ProjectBoard() {
         )}
       </div>
 
-      {/* 5. Custom Publish Options Modal */}
-        <PublishModal
+      {/* Custom Publish Options Modal */}
+      <PublishModal
         isOpen={publishModalOpen}
         projectName={project.projectName}
         onClose={() => setPublishModalOpen(false)}
         onConfirmPublish={(data) => executePublish(data)}
       />
+
       {/* Reusable Dialog Primitive */}
       <Dialog
         isOpen={dialog.isOpen}
