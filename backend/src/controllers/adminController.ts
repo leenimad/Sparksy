@@ -74,3 +74,18 @@ export const toggleUserRole = asyncHandler(async (
     },
   });
 });
+// @route   GET /api/admin/analytics
+// @access  Private/Admin
+export const getAdminGlobalAnalytics = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  // Fetch all projects across all users, populating creator names
+  const allProjects = await ProjectWorkspace.find().populate('user', 'name').sort({ createdAt: -1 });
+
+  res.status(200).json({
+    status: 'success',
+    results: allProjects.length,
+    data: allProjects,
+  });
+});

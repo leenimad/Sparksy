@@ -80,6 +80,11 @@ const ProjectWorkspaceSchema = new Schema(
       type: [String],
       default: [],
     },
+        clonedFrom: {
+      type: Schema.Types.ObjectId,
+      ref: 'ProjectWorkspace',
+      default: null,
+    },
   },
   {
     timestamps: true,

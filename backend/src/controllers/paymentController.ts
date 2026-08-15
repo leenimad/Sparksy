@@ -124,6 +124,7 @@ export const verifyPaymentAndUnlock = asyncHandler(async (
     liveDemoUrl: templateProject.liveDemoUrl,
     sourceCodeUrl: templateProject.sourceCodeUrl,
     deliverables: templateProject.deliverables,
+    clonedFrom: templateProject._id, 
   });
 
   res.status(200).json({

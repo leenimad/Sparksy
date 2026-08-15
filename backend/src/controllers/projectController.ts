@@ -416,6 +416,7 @@ export const cloneProject = asyncHandler(async (
     liveDemoUrl: templateProject.liveDemoUrl,
     sourceCodeUrl: templateProject.sourceCodeUrl,
     deliverables: templateProject.deliverables,
+      clonedFrom: templateProject._id,
   });
 
   res.status(201).json({

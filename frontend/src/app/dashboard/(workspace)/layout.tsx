@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Sparkles, Terminal, Wrench, ShoppingBag, LogOut, ShieldCheck, User, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { Sparkles, Terminal, Wrench, ShoppingBag, LogOut, ShieldCheck, User, ChevronLeft, ChevronRight, Menu,  X, BarChart3  } from 'lucide-react';
 import Cookies from 'js-cookie';
 import api from '@/lib/api';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -64,18 +64,20 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
   };
 
   // 2. STRICT ROLE-BASED NAVIGATION ITEMS (Completely separates Admin from Builder!)
-  const menuItems = userRole === 'admin'
+ const menuItems = userRole === 'admin'
     ? [
         { name: 'Admin Panel', href: '/dashboard/admin', icon: <ShieldCheck className="w-4 h-4 text-amber-500 flex-shrink-0" /> },
         { name: 'Marketplace Moderation', href: '/dashboard/marketplace', icon: <ShoppingBag className="w-4 h-4 flex-shrink-0" /> },
+        { name: 'Analytics', href: '/dashboard/analytics', icon: <BarChart3 className="w-4 h-4 flex-shrink-0" /> },
         { name: 'Profile & Settings', href: '/dashboard/profile', icon: <User className="w-4 h-4 flex-shrink-0" /> },
       ]
     : [
         { name: 'Active Workspaces', href: '/dashboard', icon: <Terminal className="w-4 h-4 flex-shrink-0" /> },
         { name: 'My Tool Locker', href: '/dashboard/locker', icon: <Wrench className="w-4 h-4 flex-shrink-0" /> },
+        { name: 'Analytics', href: '/dashboard/analytics', icon: <BarChart3 className="w-4 h-4 flex-shrink-0" /> },
         { name: 'Marketplace', href: '/dashboard/marketplace', icon: <ShoppingBag className="w-4 h-4 flex-shrink-0" /> },
         { name: 'Profile & Settings', href: '/dashboard/profile', icon: <User className="w-4 h-4 flex-shrink-0" /> },
-      ];
+       ];
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-[#0c0a09] text-stone-900 dark:text-white flex flex-col md:flex-row transition-colors duration-300">
