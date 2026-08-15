@@ -12,6 +12,8 @@ import learningRoutes from './routes/projectRoutes';
 import projectRoutes from './routes/projectRoutes';
 import { errorHandler } from './middleware/errorMiddleware';  
 import adminRoutes from './routes/adminRoutes'; 
+import paymentRoutes from './routes/paymentRoutes'; // Import the payment routes
+
 // Connect to MongoDB
 connectDB();
 
@@ -27,6 +29,9 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', learningRoutes);
 app.use('/api/admin', adminRoutes); 
+
+// Use the payment routes
+app.use('/api/payments', paymentRoutes);
 app.use(errorHandler);
 // Base Route
 app.get('/', (req: Request, res: Response) => {

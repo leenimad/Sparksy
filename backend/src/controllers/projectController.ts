@@ -125,24 +125,30 @@ export const getUserProjects = async (req: AuthRequest, res: Response): Promise<
 // @desc    Get a single project workspace by ID
 // @route   GET /api/projects/:id
 // @access  Private
-export const getProjectById = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const project = await ProjectWorkspace.findOne({ _id: req.params.id, user: req.user._id });
+export const getProjectById = asyncHandler(async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  // Allow access if user owns the project, OR if the project is public, OR if user is admin!
+  const query = req.user.role === 'admin'
+    ? { _id: req.params.id }
+    : {
+        _id: req.params.id,
+        $or: [{ user: req.user._id }, { isPublic: true }],
+      };
 
-    if (!project) {
-      res.status(404).json({ status: 'fail', message: 'Project not found' });
-      return;
-    }
+  const project = await ProjectWorkspace.findOne(query).populate('user', 'name');
 
-    res.status(200).json({
-      status: 'success',
-      data: project,
-    });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: (error as Error).message });
+  if (!project) {
+    res.status(404).json({ status: 'fail', message: 'Project workspace not found' });
+    return;
   }
-};
 
+  res.status(200).json({
+    status: 'success',
+    data: project,
+  });
+});
 // @desc    Update a specific task's status (To Do, In Progress, Done)
 // @route   PATCH /api/projects/:id/tasks/:taskId
 // @access  Private
