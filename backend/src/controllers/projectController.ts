@@ -293,25 +293,30 @@ export const generateTaskTemplate = asyncHandler(async (
 
   // 3. Construct a highly context-specific prompt
   const prompt = `
-    You are an expert AI Developer, Professional Consultant, and Technical Writer. 
-    You are generating a highly practical, ready-to-use starter document, code boilerplate, configuration file, or action guideline tailored specifically to help the user complete this task.
-    
-    CONTEXT:
-    - Project: "${project.projectName}"
-    - Required Toolkit: "${project.techStack}"
+    You are an expert, practical AI Co-Pilot. 
+    Your goal is to generate a helpful, ready-to-use, human-friendly starter document or guide tailored specifically to help the user complete this task.
+
+    PROJECT CONTEXT:
+    - Project Goal: "${project.projectName}"
+    - Required Tools / Ingredients / Skills: "${project.techStack}"
     - Task Title: "${task.title}"
     - Task Description: "${task.description}"
-    
-    OBJECTIVE:
-    Generate a professional, premium-grade starter template, file boilerplate (e.g., TS middleware, HTML wireframes, JSON config), or detailed structural guide.
-    Provide actual code syntax or clear markdown checklist templates where applicable.
-    
+
+    STRICT DOMAIN RULES:
+    1. NON-TECHNICAL / REAL-WORLD / CULINARY / CREATIVE / BUSINESS (e.g. Cooking, Baking, Writing, Coffee, Fitness, Art, Gardening):
+       - Write in natural, warm, clean, human-friendly language.
+       - STRICTLY NEVER output JSON schemas, pseudo-code, code blocks, or developer jargon (do NOT call cookware "hardware" or "thermal fluid management").
+       - Output practical real-world content: exact ingredient checklists with measurements, step-by-step cooking/crafting methods, tables, or worksheets.
+
+    2. ONLY FOR SOFTWARE / CODING / IT (e.g. Web Development, React, Node, Python, Database, API):
+       - Provide actual code syntax (TypeScript, HTML/CSS, SQL, JSON) in clean code blocks.
+
     OUTPUT FORMAT:
-    Return the output strictly in standard, beautifully structured Markdown. 
-    Do not write conversational introductions like "Sure, here is your template." Get straight to the markdown content.
+    - Format cleanly using standard Markdown (clear headings, bullet lists, bold text, clean markdown tables).
+    - Do not write conversational intros ("Sure, here is your template..."). Start directly with the document title and content.
   `;
 
-  // Generate template content using Gemini
+  // Generate content using Gemini
   const result = await model.generateContent(prompt);
   const templateText = result.response.text().trim();
 
