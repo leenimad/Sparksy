@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import Cookies from 'js-cookie';
 
 // Import our modular components and UI primitives
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/Navbar'; // 1. Restored upgraded Navbar!
 import BoardColumn from '@/components/BoardColumn';
 import TaskDetailModal from '@/components/TaskDetailModal';
 import Card from '@/components/ui/Card';
@@ -92,7 +92,7 @@ export default function ProjectBoard() {
     }
 
     const user = JSON.parse(userStr);
-    setUserName(user.name);
+    setUserName(user.name || '');
 
     fetchProjectDetails();
     fetchUserToolbox();
@@ -296,7 +296,6 @@ export default function ProjectBoard() {
     setExportingPDF(true);
 
     try {
-      // Lazy load jsPDF on demand for optimal speed
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF();
       let y = 20;
@@ -464,9 +463,9 @@ export default function ProjectBoard() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-stone-50 dark:bg-[#0c0a09] text-stone-900 dark:text-white flex flex-col justify-center items-center">
+      <div className="flex justify-center items-center h-screen bg-stone-50 dark:bg-[#0c0a09]">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-      </main>
+      </div>
     );
   }
 
@@ -480,11 +479,13 @@ export default function ProjectBoard() {
 
   return (
     <main className="min-h-screen bg-stone-50 dark:bg-[#0c0a09] text-stone-900 dark:text-white pb-16 transition-colors duration-300">
+      
+      {/* 2. Top Navigation Bar (Restored with Clickable Logo, Clickable Avatar & Quick Links!) */}
       <Navbar userName={userName} onLogout={handleLogout} />
 
-      <div className="max-w-6xl mx-auto px-8 mt-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 mt-10 space-y-8">
         {/* Workspace Sub-Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-stone-200 dark:border-stone-800/60 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800/60 pb-6">
           <div className="flex items-start gap-4">
             <button
               onClick={() => router.push('/dashboard')}
@@ -634,7 +635,7 @@ export default function ProjectBoard() {
               </Card>
             </div>
 
-            {/* UNLOCKED ASSETS PERMANENT ACCESS BANNER (Shows if sourceCodeUrl exists!) */}
+            {/* UNLOCKED ASSETS PERMANENT ACCESS BANNER */}
             {project.sourceCodeUrl && (
               <Card className="!p-5 bg-gradient-to-r from-amber-500/5 to-orange-500/5 border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
